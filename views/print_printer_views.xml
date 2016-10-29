@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<odoo>
+  <data>
+
+    <!-- Form view -->
+    <record id="printer_form" model="ir.ui.view">
+      <field name="name">print.printer.form</field>
+      <field name="model">print.printer</field>
+      <field name="arch" type="xml">
+	<form string="Printer">
+	  <header>
+	    <button name="spool_test_page" type="object" class="oe_highlight"
+		    string="Print Test Page"/>
+	    <button name="set_user_default" type="object"
+		    string="Set as User Default Printer"/>
+	    <button name="set_system_default" type="object"
+		    string="Set as System Default Printer"
+		    groups="base.group_system"/>
+	  </header>
+	  <sheet>
+	    <div class="oe_title">
+	      <label for="name" class="oe_edit_only"/>
+	      <h1>
+		<field name="name" placeholder="e.g. Label printer"/>
+	      </h1>
+	    </div>
+	    <group>
+	      <group name="properties" string="System Properties">
+		<field name="queue"/>
+		<field name="is_default"/>
+	      </group>
+	      <group name="identity" string="Identification">
+		<field name="barcode"/>
+	      </group>
+	    </group>
+	  </sheet>
+	</form>
+      </field>
+    </record>
+
+    <!-- Tree view -->
+    <record id="printer_tree" model="ir.ui.view">
+      <field name="name">print.printer.tree</field>
+      <field name="model">print.printer</field>
+      <field name="arch" type="xml">
+	<tree string="Printers">
+	  <field name="name"/>
+	  <field name="queue"/>
+	  <field name="barcode"/>
+	</tree>
+      </field>
+    </record>
+
+    <!-- Search filter -->
+    <record id="printer_search" model="ir.ui.view">
+      <field name="name">print.printer.search</field>
+      <field name="model">print.printer</field>
+      <field name="arch" type="xml">
+	<search string="Search Printer">
+	  <field name="name" string="Printer"
+		 filter_domain="['|','|',('name','ilike',self),
+					 ('queue','ilike',self),
+					 ('barcode','=',self)]"/>
+	  <field name="queue"/>
+	  <group string='Filters'>
+	    <filter name="is_default" string="Is System Default Printer"
+		    domain="[('is_default', '=', 'True')]"/>
+	  </group>
+	  <group string='Group by...'>
+	    <filter name="by_queue" string="Queue" domain="[]"
+		    context="{'group_by':'queue'}"/>
+	  </group>
+	</search>
+      </field>
+    </record>
+
+    <!-- Action window -->
+    <record id="printer_action" model="ir.actions.act_window">
+      <field name="name">Printers</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">print.printer</field>
+      <field name="view_type">form</field>
+      <field name="view_id" ref="printer_tree"/>
+      <field name="search_view_id" ref="printer_search"/>
+      <field name="help" type="html">
+	<p class="oe_view_nocontent_create">
+	  Click to create a Printer.
+	</p>
+	<p>
+	  Backend processes may print documents and reports directly
+	  to printers connected to the Odoo server.
+	</p>
+      </field>
+    </record>
+
+    <!-- Menu item -->
+    <menuitem id="printer_menu" action="printer_action"
+	      parent="base.menu_administration" sequence="10"/>
+
+  </data>
+</odoo>

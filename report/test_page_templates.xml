@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <!-- Printer Test Page template -->
+    <template id="report_test_page">
+      <t t-call="report.html_container">
+	<t t-foreach="docs" t-as="o">
+	  <t t-call="report.external_layout">
+	    <div class="page">
+
+	      <h1><span t-field="o.name"/></h1>
+
+	      <div t-if="o.queue">
+		Print Queue Name: <strong><span t-field="o.queue"/></strong>
+	      </div>
+
+	      <div t-if="o.barcode">
+		<div style="height: 50px;"/>
+		<img style="width: 300px;"
+		     t-att-src="'/report/barcode/?type=Code128&amp;'
+				'humanreadable=1&amp;value=%s' % o.barcode"/>
+	      </div>
+
+	      <div style="height: 50px;"/>
+
+	      <p>This is a printer test page.</p>
+
+	    </div>
+	  </t>
+	</t>
+      </t>
+    </template>
+
+  </data>
+</odoo>

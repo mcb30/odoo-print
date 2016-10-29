@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <!-- Printer Test Page report -->
+    <report id="action_report_test_page" model="print.printer"
+	    name="print.report_test_page" report_type="qweb-pdf"
+	    file="print.report_test_page" string="Printer Test Page"/>
+
+  </data>
+</odoo>
