@@ -1,5 +1,7 @@
 from odoo import api, fields, models
+from odoo.tools.translate import _
 from odoo.tools.misc import find_in_path
+from odoo.exceptions import UserError
 import os
 import subprocess
 
