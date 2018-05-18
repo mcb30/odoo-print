@@ -106,7 +106,7 @@ class Printer(models.Model):
     def spool_test_page(self):
         """Print test page"""
         for printer in self._printers():
-            printer.spool_report(printer.ids, 'odoo-print.report_test_page',
+            printer.spool_report(printer.ids, 'print.report_test_page',
                                  title='Test page')
         return True
 
