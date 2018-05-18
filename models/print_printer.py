@@ -46,7 +46,7 @@ class Printer(models.Model):
             raise UserError(_('No default printer specified'))
         return printers
 
-    def _spool_lpr(self, document, title=None):
+    def _spool_lpr(self, document, title=None, copies=None):
         """Spool document to printer via lpr"""
         lpr_exec = _find_lpr_exec()
         for printer in self._printers():
@@ -56,6 +56,10 @@ class Printer(models.Model):
                 args += ['-P', printer.queue]
             if title is not None:
                 args += ['-T', title]
+            if copies is not None:
+                # Type casting as this is taken from endpoint
+                args += ['-#', str(int(copies))]
+
             # Pipe document into lpr
             _logger.info('Printing via %s',  ' '.join(args))
             lpr = subprocess.Popen(args, stdin=subprocess.PIPE,
@@ -67,17 +71,18 @@ class Printer(models.Model):
                                 (str(lpr.returncode), output))
 
     @api.multi
-    def spool(self, document, title=None):
+    def spool(self, document, title=None, copies=None):
         """Spool document to printer"""
         # Spool document via OS-dependent spooler mechanism
         if os.name == 'posix':
-            self._spool_lpr(document, title)
+            self._spool_lpr(document, title, copies)
         else:
             raise UserError(_('Cannot print on OS: %s' % os.name))
         return True
 
     @api.multi
-    def spool_report(self, docids, report_name, data=None, title=None):
+    def spool_report(self, docids, report_name, data=None, title=None,
+                     copies=None):
         """Spool report to printer"""
         # Generate PDF report
         report = self.env['ir.actions.report'].search(
@@ -94,7 +99,7 @@ class Printer(models.Model):
             title = ('%s %s' % (report_name, str(docids)))
 
         # Spool generated PDF to printer(s)
-        self.spool(document, title=title)
+        self.spool(document, title=title, copies=copies)
         return True
 
     @api.multi
@@ -116,6 +121,6 @@ class Printer(models.Model):
     def set_system_default(self):
         """Set as system default printer"""
         self.ensure_one()
-        self.search([('is_default','=',True)]).write({'is_default': False})
+        self.search([('is_default', '=', True)]).write({'is_default': False})
         self.is_default = True
         return True
