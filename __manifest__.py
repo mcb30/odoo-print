@@ -15,7 +15,7 @@ Key Features
 * Define a system default printer
     """,
     'version': '0.1',
-    'depends': ['report'],
+    'depends': ['base', 'web'],
     'author': 'Michael Brown <mbrown@fensystems.co.uk>',
     'category': 'Extra Tools',
     'data': [

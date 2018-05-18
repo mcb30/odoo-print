@@ -1,2 +1,2 @@
-import res_users
-import print_printer
+from . import res_users
+from . import print_printer

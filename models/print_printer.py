@@ -77,14 +77,22 @@ class Printer(models.Model):
         return True
 
     @api.multi
-    def spool_report(self, docids, report_name, html=None, data=None,
-                     title=None):
+    def spool_report(self, docids, report_name, data=None, title=None):
         """Spool report to printer"""
         # Generate PDF report
-        document = self.env['report'].get_pdf(docids, report_name, html, data)
+        report = self.env['ir.actions.report'].search(
+                 [('report_name', '=', report_name)])
+
+        if not report:
+            raise UserError(_('Cannot find report: %s' % report_name))
+
+        # render_qweb_pdf returns a tuple of (content,'pdf')
+        document = report.render_qweb_pdf(docids, data)[0]
+
         # Use report name and document IDs as title if no title specified
         if title is None:
             title = ('%s %s' % (report_name, str(docids)))
+
         # Spool generated PDF to printer(s)
         self.spool(document, title=title)
         return True
@@ -93,7 +101,7 @@ class Printer(models.Model):
     def spool_test_page(self):
         """Print test page"""
         for printer in self._printers():
-            printer.spool_report(printer.ids, 'print.report_test_page',
+            printer.spool_report(printer.ids, 'odoo-print.report_test_page',
                                  title='Test page')
         return True
 
