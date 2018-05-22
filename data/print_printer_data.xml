@@ -5,7 +5,6 @@
     <!-- Default printer -->
     <record id="default_printer" model="print.printer">
       <field name="name">System Default Printer</field>
-      <field name="is_default" eval="True"/>
     </record>
 
   </data>
