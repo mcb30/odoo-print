@@ -1,11 +1,11 @@
+import logging
+import os
+import subprocess
 from odoo import api, fields, models
 from odoo.tools.translate import _
 from odoo.tools.misc import find_in_path
 from odoo.exceptions import UserError
-import os
-import subprocess
 
-import logging
 _logger = logging.getLogger(__name__)
 
 
@@ -57,7 +57,7 @@ class Printer(models.Model):
             if title is not None:
                 args += ['-T', title]
             # Pipe document into lpr
-            _logger.info('Printing via %s',  ' '.join(args))
+            _logger.info('Printing via %s', ' '.join(args))
             lpr = subprocess.Popen(args, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT)
@@ -109,6 +109,6 @@ class Printer(models.Model):
     def set_system_default(self):
         """Set as system default printer"""
         self.ensure_one()
-        self.search([('is_default','=',True)]).write({'is_default': False})
+        self.search([('is_default', '=', True)]).write({'is_default': False})
         self.is_default = True
         return True
