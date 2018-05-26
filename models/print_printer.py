@@ -77,11 +77,12 @@ class Printer(models.Model):
         return True
 
     @api.multi
-    def spool_report(self, docids, report_name, html=None, data=None,
-                     title=None):
+    def spool_report(self, docids, report_name, title=None):
         """Spool report to printer"""
         # Generate PDF report
-        document = self.env['report'].get_pdf(docids, report_name, html, data)
+        Report = self.env['ir.actions.report']
+        report = Report._get_report_from_name(report_name)
+        document = report.render_qweb_pdf(docids)[0]
         # Use report name and document IDs as title if no title specified
         if title is None:
             title = ('%s %s' % (report_name, str(docids)))
