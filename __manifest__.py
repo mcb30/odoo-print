@@ -24,5 +24,6 @@ Key Features
              'views/res_users_views.xml',
              'views/print_printer_views.xml',
              'data/print_printer_data.xml',
+             'data/set_default_printer.yml'
             ],
 }
