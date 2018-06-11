@@ -1,0 +1,7 @@
+-
+  Set default printer is not configured
+-
+  !python {model: print.printer}: |
+    has_default = self.search([('is_default', '=', True)])
+    if not has_default:
+      self.env.ref('print.default_printer').is_default = True

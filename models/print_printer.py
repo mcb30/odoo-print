@@ -46,7 +46,7 @@ class Printer(models.Model):
             raise UserError(_('No default printer specified'))
         return printers
 
-    def _spool_lpr(self, document, title=None):
+    def _spool_lpr(self, document, title=None, copies=1):
         """Spool document to printer via lpr"""
         lpr_exec = _find_lpr_exec()
         for printer in self._printers():
@@ -56,6 +56,9 @@ class Printer(models.Model):
                 args += ['-P', printer.queue]
             if title is not None:
                 args += ['-T', title]
+            if copies and copies > 1:
+                args += ['-#', str(int(copies))]
+
             # Pipe document into lpr
             _logger.info('Printing via %s', ' '.join(args))
             lpr = subprocess.Popen(args, stdin=subprocess.PIPE,
@@ -67,35 +70,37 @@ class Printer(models.Model):
                                 (str(lpr.returncode), output))
 
     @api.multi
-    def spool(self, document, title=None):
+    def spool(self, document, title=None, copies=1):
         """Spool document to printer"""
         # Spool document via OS-dependent spooler mechanism
         if os.name == 'posix':
-            self._spool_lpr(document, title)
+            self._spool_lpr(document, title, copies=copies)
         else:
             raise UserError(_('Cannot print on OS: %s' % os.name))
         return True
 
     @api.multi
-    def spool_report(self, docids, report_name, title=None):
+    def spool_report(self, docids, report_name, data=None,
+                     title=None, copies=1):
         """Spool report to printer"""
         # Generate PDF report
         Report = self.env['ir.actions.report']
         report = Report._get_report_from_name(report_name)
-        document = report.render_qweb_pdf(docids)[0]
+        document = report.render_qweb_pdf(docids, data)[0]
         # Use report name and document IDs as title if no title specified
         if title is None:
             title = ('%s %s' % (report_name, str(docids)))
         # Spool generated PDF to printer(s)
-        self.spool(document, title=title)
+        self.spool(document, title=title, copies=copies)
         return True
 
     @api.multi
-    def spool_test_page(self):
+    def spool_test_page(self, copies=1):
         """Print test page"""
         for printer in self._printers():
             printer.spool_report(printer.ids, 'print.report_test_page',
-                                 title='Test page')
+                                 title='Test page',
+                                 copies=copies)
         return True
 
     @api.multi
