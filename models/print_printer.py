@@ -86,7 +86,7 @@ class Printer(models.Model):
         # Generate PDF report
         Report = self.env['ir.actions.report']
         report = Report._get_report_from_name(report_name)
-        document = report.render_qweb_pdf(docids)[0]
+        document = report.render_qweb_pdf(docids, data)[0]
         # Use report name and document IDs as title if no title specified
         if title is None:
             title = ('%s %s' % (report_name, str(docids)))
