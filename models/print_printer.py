@@ -56,7 +56,7 @@ class Printer(models.Model):
                 args += ['-P', printer.queue]
             if title is not None:
                 args += ['-T', title]
-            if copies and copies > 1:
+            if copies > 1:
                 args += ['-#', str(int(copies))]
 
             # Pipe document into lpr
