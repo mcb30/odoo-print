@@ -1,0 +1,10 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t odoo-print-tester .
+
+script:
+  - docker run -i -t --rm odoo-print-tester
