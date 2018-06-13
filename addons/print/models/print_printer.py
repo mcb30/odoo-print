@@ -40,6 +40,7 @@ class Printer(models.Model):
 
     def _printers(self):
         """Determine printers to use"""
+
         # Use explicitly specified list of printers, falling back to
         # user's default printer, falling back to system default
         # printer
@@ -53,6 +54,7 @@ class Printer(models.Model):
         """Spool document to printer via lpr"""
         lpr_exec = _find_lpr_exec()
         for printer in self._printers():
+
             # Construct lpr command line
             args = [lpr_exec]
             if printer.queue:
@@ -61,6 +63,7 @@ class Printer(models.Model):
                 args += ['-T', title]
             if copies > 1:
                 args += ['-#', str(copies)]
+
             # Pipe document into lpr
             _logger.info('Printing via %s', ' '.join(args))
             lpr = subprocess.Popen(args, stdin=subprocess.PIPE,
@@ -74,6 +77,7 @@ class Printer(models.Model):
     @api.multi
     def spool(self, document, title=None, copies=1):
         """Spool document to printer"""
+
         # Spool document via OS-dependent spooler mechanism
         if os.name == 'posix':
             self._spool_lpr(document, title=title, copies=copies)
@@ -86,13 +90,16 @@ class Printer(models.Model):
                      copies=1):
         """Spool report to printer"""
         # pylint: disable=too-many-arguments
+
         # Generate PDF report
         Report = self.env['ir.actions.report']
         report = Report._get_report_from_name(report_name)
         document = report.render_qweb_pdf(docids, data)[0]
+
         # Use report name and document IDs as title if no title specified
         if title is None:
             title = ('%s %s' % (report_name, str(docids)))
+
         # Spool generated PDF to printer(s)
         self.spool(document, title=title, copies=copies)
         return True
