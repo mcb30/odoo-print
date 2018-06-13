@@ -71,7 +71,7 @@ class Printer(models.Model):
         """Spool document to printer"""
         # Spool document via OS-dependent spooler mechanism
         if os.name == 'posix':
-            self._spool_lpr(document, title)
+            self._spool_lpr(document, title=title)
         else:
             raise UserError(_('Cannot print on OS: %s' % os.name))
         return True
