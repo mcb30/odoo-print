@@ -8,4 +8,4 @@ class User(models.Model):
 
     _inherit = 'res.users'
 
-    printer_id = fields.Many2one('print.printer', 'Default Printer')
+    printer_id = fields.Many2one('print.printer', "Default Printer")

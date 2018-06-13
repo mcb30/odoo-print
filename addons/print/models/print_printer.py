@@ -17,7 +17,7 @@ def _find_lpr_exec():
         lpr_exec = find_in_path('lpr')
         return lpr_exec
     except IOError:
-        raise UserError(_('Cannot find lpr executable'))
+        raise UserError(_("Cannot find lpr executable"))
 
 
 class Printer(models.Model):
@@ -26,17 +26,17 @@ class Printer(models.Model):
     _name = 'print.printer'
     _description = 'Printer'
 
-    name = fields.Char(string='Name', index=True, required=True)
-    barcode = fields.Char(string='Barcode', index=True)
-    queue = fields.Char(string='Print Queue Name', index=True)
-    is_default = fields.Boolean(string='System Default', index=True,
+    name = fields.Char(string="Name", index=True, required=True)
+    barcode = fields.Char(string="Barcode", index=True)
+    queue = fields.Char(string="Print Queue Name", index=True)
+    is_default = fields.Boolean(string="System Default", index=True,
                                 default=False)
 
     _sql_constraints = [('barcode_uniq', 'unique (barcode)',
-                         'The Barcode must be unique'),
+                         "The Barcode must be unique"),
                         ('single_default',
                          'exclude (is_default with =) where (is_default)',
-                         'There must be only one System Default Printer')]
+                         "There must be only one System Default Printer")]
 
     def _printers(self):
         """Determine printers to use"""
@@ -47,7 +47,7 @@ class Printer(models.Model):
         printers = (self or self.env.user.printer_id or
                     self.search([('is_default', '=', True)]))
         if not printers:
-            raise UserError(_('No default printer specified'))
+            raise UserError(_("No default printer specified"))
         return printers
 
     def _spool_lpr(self, document, title=None, copies=1):
@@ -65,13 +65,13 @@ class Printer(models.Model):
                 args += ['-#', str(copies)]
 
             # Pipe document into lpr
-            _logger.info('Printing via %s', ' '.join(args))
+            _logger.info("Printing via %s", ' '.join(args))
             lpr = subprocess.Popen(args, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT)
             output = lpr.communicate(document)[0]
             if lpr.returncode != 0:
-                raise UserError(_('lpr failed (error code: %s). Message: %s') %
+                raise UserError(_("lpr failed (error code: %s). Message: %s") %
                                 (str(lpr.returncode), output))
 
     @api.multi
@@ -82,7 +82,7 @@ class Printer(models.Model):
         if os.name == 'posix':
             self._spool_lpr(document, title=title, copies=copies)
         else:
-            raise UserError(_('Cannot print on OS: %s' % os.name))
+            raise UserError(_("Cannot print on OS: %s" % os.name))
         return True
 
     @api.multi
@@ -98,7 +98,7 @@ class Printer(models.Model):
 
         # Use report name and document IDs as title if no title specified
         if title is None:
-            title = ('%s %s' % (report_name, str(docids)))
+            title = ("%s %s" % (report_name, str(docids)))
 
         # Spool generated PDF to printer(s)
         self.spool(document, title=title, copies=copies)
@@ -109,7 +109,7 @@ class Printer(models.Model):
         """Print test page"""
         for printer in self._printers():
             printer.spool_report(printer.ids, 'print.report_test_page',
-                                 title='Test page')
+                                 title="Test page")
         return True
 
     @api.multi
