@@ -1,3 +1,4 @@
+# pylint: disable=missing-docstring,pointless-statement
 {
     'name': 'Printing',
     'summary': 'Printer integration',
@@ -18,11 +19,11 @@ Key Features
     'author': 'Michael Brown <mbrown@fensystems.co.uk>',
     'category': 'Extra Tools',
     'data': [
-             'security/ir.model.access.csv',
-             'report/test_page_templates.xml',
-             'report/test_page_reports.xml',
-             'views/res_users_views.xml',
-             'views/print_printer_views.xml',
-             'data/print_printer_data.xml',
-            ],
+        'security/ir.model.access.csv',
+        'report/test_page_templates.xml',
+        'report/test_page_reports.xml',
+        'views/res_users_views.xml',
+        'views/print_printer_views.xml',
+        'data/print_printer_data.xml',
+    ],
 }

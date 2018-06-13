@@ -1,3 +1,5 @@
+"""Printers"""
+
 import logging
 import os
 import subprocess
@@ -19,6 +21,7 @@ def _find_lpr_exec():
 
 
 class Printer(models.Model):
+    """Printer"""
 
     _name = 'print.printer'
     _description = 'Printer'
@@ -82,6 +85,7 @@ class Printer(models.Model):
     def spool_report(self, docids, report_name, data=None, title=None,
                      copies=1):
         """Spool report to printer"""
+        # pylint: disable=too-many-arguments
         # Generate PDF report
         Report = self.env['ir.actions.report']
         report = Report._get_report_from_name(report_name)
