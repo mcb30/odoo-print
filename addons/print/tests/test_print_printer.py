@@ -1,6 +1,8 @@
 """Printing tests"""
 
+import os
 from unittest.mock import patch, Mock, ANY
+from odoo.exceptions import UserError
 from odoo.tests import common
 
 MOCK_LPR = 'MOCK_LPR'
@@ -123,3 +125,36 @@ class TestPrintPrinter(common.SavepointCase):
         self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY)
         Printer.sudo(self.user_bob).spool_test_page()
         self.assertPrintedLpr('-P', 'plotter', '-T', ANY)
+
+    def test07_no_printer(self):
+        """Test UserError when no default printer is specified"""
+        Printer = self.env['print.printer']
+        self.printer_default.is_default = False
+        with self.assertRaises(UserError):
+            Printer.spool_test_page()
+
+    def test08_missing_lpr(self):
+        """Test UserError when lpr binary is missing"""
+        Printer = self.env['print.printer']
+        self.mock_find_in_path.side_effect = IOError
+        with self.assertRaises(UserError):
+            Printer.spool_test_page()
+
+    def test09_failing_lpr(self):
+        """Test UserError when lpr fails"""
+        Printer = self.env['print.printer']
+        self.mock_lpr.returncode = 1
+        with self.assertRaises(UserError):
+            Printer.spool_test_page()
+
+    def test10_unsupported_os(self):
+        """Test UserError when OS is unsupported"""
+        Printer = self.env['print.printer']
+        with patch.object(os, 'name', 'msdos'):
+            with self.assertRaises(UserError):
+                Printer.spool_test_page()
+
+    def test11_untitled(self):
+        """Test ability to omit document title"""
+        self.printer_default.spool("Hello world")
+        self.assertPrintedLpr()
