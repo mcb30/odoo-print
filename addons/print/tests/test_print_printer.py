@@ -64,16 +64,62 @@ class TestPrintPrinter(common.SavepointCase):
         self.mock_lpr.communicate.return_value = ('', '')
         self.mock_lpr.returncode = 0
         self.mock_subprocess.Popen.return_value = self.mock_lpr
-        self.mock_popen_kwargs = {
-            'stdin': ANY,
-            'stdout': ANY,
-            'stderr': ANY,
-        }
+
+    def assertPrintedLpr(self, *args):
+        """Assert that ``lpr`` was invoked with the specified argument list"""
+        self.mock_subprocess.Popen.assert_called_with(
+            [MOCK_LPR, *args], stdin=ANY, stdout=ANY, stderr=ANY
+        )
 
     def test01_spool_test_page(self):
-        """Test printing a test page"""
+        """Test printing a test page to unspecified (default) printer"""
         Printer = self.env['print.printer']
         Printer.spool_test_page()
-        self.mock_subprocess.Popen.assert_called_once_with(
-            [MOCK_LPR, '-T', ANY], **self.mock_popen_kwargs
-        )
+        self.assertPrintedLpr('-T', ANY)
+
+    def test02_specific_printer(self):
+        """Test printing a test page to specified printers"""
+        self.printer_default.spool_test_page()
+        self.assertPrintedLpr('-T', ANY)
+        self.printer_dotmatrix.spool_test_page()
+        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY)
+        self.printer_plotter.spool_test_page()
+        self.assertPrintedLpr('-P', 'plotter', '-T', ANY)
+
+    def test03_title(self):
+        """Test specifying job title"""
+        self.printer_default.spool_report(self.printer_default.ids,
+                                          'print.report_test_page',
+                                          title="Not a test page")
+        self.assertPrintedLpr('-T', "Not a test page")
+
+    def test04_copies(self):
+        """Test specifying number of copies"""
+        self.printer_default.spool_report(self.printer_default.ids,
+                                          'print.report_test_page', copies=42)
+        self.assertPrintedLpr('-T', ANY, '-#', '42')
+
+    def test05_system_default(self):
+        """Test changing system default printer"""
+        Printer = self.env['print.printer']
+        Printer.spool_test_page()
+        self.assertPrintedLpr('-T', ANY)
+        self.printer_dotmatrix.set_system_default()
+        Printer.spool_test_page()
+        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY)
+
+    def test06_user_default(self):
+        """Test changing user default printer"""
+        Printer = self.env['print.printer']
+        Printer.sudo(self.user_alice).spool_test_page()
+        self.assertPrintedLpr('-T', ANY)
+        Printer.sudo(self.user_bob).spool_test_page()
+        self.assertPrintedLpr('-T', ANY)
+        self.printer_dotmatrix.sudo(self.user_alice).set_user_default()
+        self.assertEqual(self.user_alice.printer_id, self.printer_dotmatrix)
+        self.printer_plotter.sudo(self.user_bob).set_user_default()
+        self.assertEqual(self.user_bob.printer_id, self.printer_plotter)
+        Printer.sudo(self.user_alice).spool_test_page()
+        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY)
+        Printer.sudo(self.user_bob).spool_test_page()
+        self.assertPrintedLpr('-P', 'plotter', '-T', ANY)
