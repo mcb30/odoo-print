@@ -1,6 +1,8 @@
 Print directly to backend printers
 ==================================
 
+[![Build Status](https://travis-ci.org/unipartdigital/odoo-print.svg?branch=master)](https://travis-ci.org/unipartdigital/odoo-print)
+
 This module provides a ```print.printer``` model to represent printers
 connected to the Odoo server.  This allows for backend code to send
 reports directly to a printer, rather than requiring the user to
