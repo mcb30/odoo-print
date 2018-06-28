@@ -18,6 +18,9 @@ Key Features
     'version': '1.0',
     'author': 'Michael Brown <mbrown@fensystems.co.uk>',
     'category': 'Extra Tools',
+    'depends': [
+        'web'
+    ],
     'data': [
         'security/ir.model.access.csv',
         'report/test_page_templates.xml',
