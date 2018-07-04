@@ -8,6 +8,8 @@ from odoo.tests import common
 MOCK_LPR = 'MOCK_LPR'
 
 
+@common.at_install(False)
+@common.post_install(True)
 class TestPrintPrinter(common.SavepointCase):
     """Printing tests"""
 
