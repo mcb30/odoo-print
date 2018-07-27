@@ -2,6 +2,7 @@
 
 import os
 from unittest.mock import patch, Mock, ANY
+import magic
 from odoo.exceptions import UserError
 from odoo.tests import common
 
@@ -74,6 +75,11 @@ class TestPrintPrinter(common.SavepointCase):
         self.mock_subprocess.Popen.assert_called_once_with(
             [MOCK_LPR, *args], stdin=ANY, stdout=ANY, stderr=ANY
         )
+        self.mock_lpr.communicate.assert_called_once()
+        document = self.mock_lpr.communicate.call_args[0][0]
+        doctype = magic.detect_from_content(document)
+        self.assertTrue(doctype.mime_type)
+        self.mock_lpr.reset_mock()
         self.mock_subprocess.Popen.reset_mock()
 
     def test01_spool_test_page(self):
