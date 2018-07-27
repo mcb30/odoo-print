@@ -2,7 +2,10 @@
 
 import os
 from unittest.mock import patch, Mock, ANY
+import tempfile
+from reportlab.pdfgen.canvas import Canvas
 from odoo.exceptions import UserError
+from odoo.tools import config
 from odoo.tools.mimetypes import guess_mimetype
 from odoo.tests import common
 
@@ -70,6 +73,17 @@ class TestPrintPrinter(common.SavepointCase):
         self.mock_lpr.returncode = 0
         self.mock_subprocess.Popen.return_value = self.mock_lpr
 
+        # Create mock test_report_directory to ensure that
+        # ir.actions.report.render_qweb_pdf() will actually attempt to
+        # generate a PDF
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        patch_config = patch.dict(config.options, {
+            'test_report_directory': self.tempdir.name,
+        })
+        patch_config.start()
+        self.addCleanup(patch_config.stop)
+
     def assertPrintedLpr(self, *args):
         """Assert that ``lpr`` was invoked with the specified argument list"""
         self.mock_subprocess.Popen.assert_called_once_with(
@@ -78,7 +92,7 @@ class TestPrintPrinter(common.SavepointCase):
         self.mock_lpr.communicate.assert_called_once()
         document = self.mock_lpr.communicate.call_args[0][0]
         mimetype = guess_mimetype(document)
-        self.assertTrue(mimetype)
+        self.assertEqual(mimetype, 'application/pdf')
         self.mock_lpr.reset_mock()
         self.mock_subprocess.Popen.reset_mock()
 
@@ -165,5 +179,8 @@ class TestPrintPrinter(common.SavepointCase):
 
     def test11_untitled(self):
         """Test ability to omit document title"""
-        self.printer_default.spool("Hello world")
+        canvas = Canvas('')
+        canvas.drawString(100, 750, "Hello world!")
+        document = canvas.getpdfdata()
+        self.printer_default.spool(document)
         self.assertPrintedLpr()
