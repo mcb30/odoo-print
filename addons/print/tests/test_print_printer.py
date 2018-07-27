@@ -71,7 +71,7 @@ class TestPrintPrinter(common.SavepointCase):
 
     def assertPrintedLpr(self, *args):
         """Assert that ``lpr`` was invoked with the specified argument list"""
-        self.mock_subprocess.Popen.assert_called_with(
+        self.mock_subprocess.Popen.assert_called_once_with(
             [MOCK_LPR, *args], stdin=ANY, stdout=ANY, stderr=ANY
         )
         self.mock_subprocess.Popen.reset_mock()
