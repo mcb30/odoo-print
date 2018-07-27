@@ -2,8 +2,8 @@
 
 import os
 from unittest.mock import patch, Mock, ANY
-import magic
 from odoo.exceptions import UserError
+from odoo.tools.mimetypes import guess_mimetype
 from odoo.tests import common
 
 MOCK_LPR = 'MOCK_LPR'
@@ -77,8 +77,8 @@ class TestPrintPrinter(common.SavepointCase):
         )
         self.mock_lpr.communicate.assert_called_once()
         document = self.mock_lpr.communicate.call_args[0][0]
-        doctype = magic.detect_from_content(document)
-        self.assertTrue(doctype.mime_type)
+        mimetype = guess_mimetype(document)
+        self.assertTrue(mimetype)
         self.mock_lpr.reset_mock()
         self.mock_subprocess.Popen.reset_mock()
 
