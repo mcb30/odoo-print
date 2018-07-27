@@ -74,6 +74,7 @@ class TestPrintPrinter(common.SavepointCase):
         self.mock_subprocess.Popen.assert_called_with(
             [MOCK_LPR, *args], stdin=ANY, stdout=ANY, stderr=ANY
         )
+        self.mock_subprocess.Popen.reset_mock()
 
     def test01_spool_test_page(self):
         """Test printing a test page to unspecified (default) printer"""
