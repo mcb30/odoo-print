@@ -184,3 +184,9 @@ class TestPrintPrinter(common.SavepointCase):
         document = canvas.getpdfdata()
         self.printer_default.spool(document)
         self.assertPrintedLpr()
+
+    def test12_barcode(self):
+        """Test ability to print with barcode"""
+        self.printer_dotmatrix.barcode = 'DOTMATRIX'
+        self.printer_dotmatrix.spool_test_page()
+        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY)
