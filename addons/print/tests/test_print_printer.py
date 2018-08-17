@@ -196,3 +196,9 @@ class TestPrintPrinter(common.SavepointCase):
         with self.assertRaises(UserError):
             self.printer_default.spool_report(self.printer_default.ids,
                                               'print.nonexistent_report')
+
+    def test14_xmlid(self):
+        """Test ability to use XML ID to identify a report"""
+        self.printer_default.spool_report(self.printer_default.ids,
+                                          'print.action_report_test_page')
+        self.assertPrintedLpr('-T', ANY)

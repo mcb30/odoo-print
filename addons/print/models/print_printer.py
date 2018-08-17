@@ -95,6 +95,8 @@ class Printer(models.Model):
         Report = self.env['ir.actions.report']
         report = Report._get_report_from_name(report_name)
         if not report:
+            report = self.env.ref(report_name, raise_if_not_found=False)
+        if not report:
             raise UserError(_("Undefined report %s") % report_name)
         document = report.render_qweb_pdf(docids, data)[0]
 
