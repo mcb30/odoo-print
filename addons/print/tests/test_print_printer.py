@@ -190,3 +190,9 @@ class TestPrintPrinter(common.SavepointCase):
         self.printer_dotmatrix.barcode = 'DOTMATRIX'
         self.printer_dotmatrix.spool_test_page()
         self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY)
+
+    def test13_nonexistent(self):
+        """Test UserError for nonexistent report"""
+        with self.assertRaises(UserError):
+            self.printer_default.spool_report(self.printer_default.ids,
+                                              'print.nonexistent_report')

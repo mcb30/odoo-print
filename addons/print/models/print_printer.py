@@ -94,6 +94,8 @@ class Printer(models.Model):
         # Generate PDF report
         Report = self.env['ir.actions.report']
         report = Report._get_report_from_name(report_name)
+        if not report:
+            raise UserError(_("Undefined report %s") % report_name)
         document = report.render_qweb_pdf(docids, data)[0]
 
         # Use report name and document IDs as title if no title specified
