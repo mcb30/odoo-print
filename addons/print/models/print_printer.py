@@ -91,20 +91,20 @@ class Printer(models.Model):
         """Spool report to printer"""
         # pylint: disable=too-many-arguments
 
-        # Generate PDF report
+        # Generate report
         Report = self.env['ir.actions.report']
         report = Report._get_report_from_name(report_name)
         if not report:
             report = self.env.ref(report_name, raise_if_not_found=False)
         if not report:
             raise UserError(_("Undefined report %s") % report_name)
-        document = report.render_qweb_pdf(docids, data)[0]
+        document = report.render(docids, data)[0]
 
         # Use report name and document IDs as title if no title specified
         if title is None:
             title = ("%s %s" % (report_name, str(docids)))
 
-        # Spool generated PDF to printer(s)
+        # Spool generated report to printer(s)
         self.spool(document, title=title, copies=copies)
         return True
 

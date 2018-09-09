@@ -84,15 +84,14 @@ class TestPrintPrinter(common.SavepointCase):
         patch_config.start()
         self.addCleanup(patch_config.stop)
 
-    def assertPrintedLpr(self, *args):
+    def assertPrintedLpr(self, *args, mimetype='application/pdf'):
         """Assert that ``lpr`` was invoked with the specified argument list"""
         self.mock_subprocess.Popen.assert_called_once_with(
             [MOCK_LPR, *args], stdin=ANY, stdout=ANY, stderr=ANY
         )
         self.mock_lpr.communicate.assert_called_once()
         document = self.mock_lpr.communicate.call_args[0][0]
-        mimetype = guess_mimetype(document)
-        self.assertEqual(mimetype, 'application/pdf')
+        self.assertEqual(guess_mimetype(document), mimetype)
         self.mock_lpr.reset_mock()
         self.mock_subprocess.Popen.reset_mock()
 
@@ -202,3 +201,12 @@ class TestPrintPrinter(common.SavepointCase):
         self.printer_default.spool_report(self.printer_default.ids,
                                           'print.action_report_test_page')
         self.assertPrintedLpr('-T', ANY)
+
+    def test15_non_pdf(self):
+        """Test ability to send non-PDF data to printer"""
+        Report = self.env['ir.actions.report']
+        report = Report._get_report_from_name('print.report_test_page')
+        report.report_type = 'qweb-html'
+        Printer = self.env['print.printer']
+        Printer.spool_test_page()
+        self.assertPrintedLpr('-T', ANY, mimetype='text/html')
