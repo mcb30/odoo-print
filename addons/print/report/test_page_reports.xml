@@ -2,10 +2,17 @@
 <odoo>
   <data>
 
-    <!-- Printer Test Page report -->
+    <!-- Printer Test Page report (PDF) -->
     <report id="action_report_test_page" model="print.printer"
 	    name="print.report_test_page" report_type="qweb-pdf"
-	    file="print.report_test_page" string="Printer Test Page"/>
+	    file="print.report_test_page"
+	    string="Printer Test Page (PDF)"/>
+
+    <!-- Printer Test Page report (CPCL) -->
+    <report id="action_report_test_page_cpcl" model="print.printer"
+	    name="print.report_test_page_cpcl" report_type="qweb-cpcl"
+	    file="print.report_test_page_cpcl"
+	    string="Printer Test Page (CPCL)"/>
 
   </data>
 </odoo>

@@ -210,3 +210,9 @@ class TestPrintPrinter(common.SavepointCase):
         Printer = self.env['print.printer']
         Printer.spool_test_page()
         self.assertPrintedLpr('-T', ANY, mimetype='text/html')
+
+    def test16_cpcl(self):
+        """Test generating CPCL/XML data"""
+        self.printer_default.spool_report(self.printer_default.ids,
+                                          'print.action_report_test_page_cpcl')
+        self.assertPrintedLpr('-T', ANY, mimetype='text/xml')

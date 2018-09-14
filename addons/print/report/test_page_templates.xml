@@ -2,7 +2,7 @@
 <odoo>
   <data>
 
-    <!-- Printer Test Page template -->
+    <!-- Printer Test Page template (PDF) -->
     <template id="report_test_page">
       <t t-call="web.html_container">
 	<t t-foreach="docs" t-as="o">
@@ -30,6 +30,23 @@
 	  </t>
 	</t>
       </t>
+    </template>
+
+    <!-- Printer Test Page template (CPCL) -->
+    <template id="report_test_page_cpcl">
+       <cpcl xmlns="http://www.fensystems.co.uk/xmlns/cpcl">
+	<t t-foreach="docs" t-as="o">
+	  <print height="50">
+	    <in-millimeters/>
+	    <center/>
+	    <contrast>3</contrast>
+	    <text y="1" size="2">Printer Test Page</text>
+	    <barcode y="10" width="0.5" height="20" t-field="o.barcode"/>
+	    <text y="33" size="2" t-field="o.name"/>
+	    <form/>
+	  </print>
+	</t>
+      </cpcl>
     </template>
 
   </data>
