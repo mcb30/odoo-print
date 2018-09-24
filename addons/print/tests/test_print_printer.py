@@ -10,6 +10,8 @@ from odoo.tools.mimetypes import guess_mimetype
 from odoo.tests import common
 
 MOCK_LPR = 'MOCK_LPR'
+HTML_MIMETYPE = guess_mimetype(b'<html><body></body></html>')
+XML_MIMETYPE = guess_mimetype(b'<?xml version="1.0"/>')
 
 
 @common.at_install(False)
@@ -209,10 +211,10 @@ class TestPrintPrinter(common.SavepointCase):
         report.report_type = 'qweb-html'
         Printer = self.env['print.printer']
         Printer.spool_test_page()
-        self.assertPrintedLpr('-T', ANY, mimetype='text/html')
+        self.assertPrintedLpr('-T', ANY, mimetype=HTML_MIMETYPE)
 
     def test16_cpcl(self):
         """Test generating CPCL/XML data"""
         self.printer_default.spool_report(self.printer_default.ids,
                                           'print.action_report_test_page_cpcl')
-        self.assertPrintedLpr('-T', ANY, mimetype='text/xml')
+        self.assertPrintedLpr('-T', ANY, mimetype=XML_MIMETYPE)
