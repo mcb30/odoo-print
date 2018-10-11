@@ -15,7 +15,7 @@ Key Features
 * Define a default printer for each user
 * Define a system default printer
     """,
-    'version': '1.0',
+    'version': '1.1',
     'author': 'Michael Brown <mbrown@fensystems.co.uk>',
     'category': 'Extra Tools',
     'depends': [
