@@ -154,6 +154,10 @@ class TestPrintPrinter(PrinterCase):
 
     def test16_cpcl(self):
         """Test generating CPCL/XML data"""
-        self.printer_default.spool_report(self.printer_default.ids,
-                                          'print.action_report_test_page_cpcl')
+        self.printer_dotmatrix.barcode = 'DOTMATRIX'
+        xmlid = 'print.action_report_test_page_cpcl'
+        self.printer_default.spool_report(self.printer_default.ids, xmlid)
         self.assertPrintedLpr('-T', ANY, mimetype=XML_MIMETYPE)
+        report = self.env.ref(xmlid)
+        cpcl = report.render(self.printer_dotmatrix.ids)[0]
+        self.assertCpclReport(cpcl, 'dotmatrix_test_page.xml')
