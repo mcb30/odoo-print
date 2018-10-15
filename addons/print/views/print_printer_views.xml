@@ -23,16 +23,27 @@
 	      <h1>
 		<field name="name" placeholder="e.g. Label printer"/>
 	      </h1>
+	      <label for="group_id" class="oe_edit_only"/>
+	      <h2>
+		<field name="group_id" options="{'no_create': True}"/>
+	      </h2>
 	    </div>
 	    <group>
 	      <group name="properties" string="System Properties">
 		<field name="queue"/>
 		<field name="is_default"/>
+		<field name="is_group"/>
 	      </group>
 	      <group name="identity" string="Identification">
 		<field name="barcode"/>
 	      </group>
 	    </group>
+	    <notebook attrs="{'invisible':[('is_group','=',False)]}">
+	      <page string="Grouped Printers">
+		<field name="child_ids"
+		       context="{'default_group_id': active_id}"/>
+	      </page>
+	    </notebook>
 	  </sheet>
 	</form>
       </field>
@@ -44,7 +55,7 @@
       <field name="model">print.printer</field>
       <field name="arch" type="xml">
 	<tree string="Printers">
-	  <field name="name"/>
+	  <field name="full_name"/>
 	  <field name="queue"/>
 	  <field name="barcode"/>
 	</tree>
@@ -58,17 +69,20 @@
       <field name="arch" type="xml">
 	<search string="Search Printer">
 	  <field name="name" string="Printer"
-		 filter_domain="['|','|',('name','ilike',self),
+		 filter_domain="['|','|',('full_name','ilike',self),
 					 ('queue','ilike',self),
 					 ('barcode','=',self)]"/>
 	  <field name="queue"/>
-	  <group string='Filters'>
+	  <field name="group_id"/>
+	  <group string="Filters">
 	    <filter name="is_default" string="Is System Default Printer"
 		    domain="[('is_default', '=', 'True')]"/>
 	  </group>
-	  <group string='Group by...'>
+	  <group string="Group by...">
 	    <filter name="by_queue" string="Queue" domain="[]"
 		    context="{'group_by':'queue'}"/>
+	    <filter name="by_group_id" string="Printer Group" domain="[]"
+		    context="{'group_by':'group_id'}"/>
 	  </group>
 	</search>
       </field>

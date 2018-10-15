@@ -3,12 +3,13 @@
 import os
 from unittest.mock import patch, ANY
 from reportlab.pdfgen.canvas import Canvas
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from .common import PrinterCase, HTML_MIMETYPE, XML_MIMETYPE
 
 
 class TestPrintPrinter(PrinterCase):
     """Printing tests"""
+    # pylint: disable=too-many-public-methods
 
     @classmethod
     def setUpClass(cls):
@@ -24,6 +25,24 @@ class TestPrintPrinter(PrinterCase):
         cls.printer_plotter = Printer.create({
             'name': "Plotter",
             'queue': 'plotter',
+        })
+        cls.printer_laser = Printer.create({
+            'name': "Laser",
+            'queue': 'laser',
+        })
+        cls.printer_inkjet = Printer.create({
+            'name': "Inkjet",
+            'queue': 'inkjet',
+        })
+
+        # Create printer groups
+        cls.group_upstairs = Printer.create({
+            'name': "Upstairs",
+            'is_group': True,
+        })
+        cls.group_downstairs = Printer.create({
+            'name': "Downstairs",
+            'is_group': True,
         })
 
         # Create users
@@ -67,9 +86,11 @@ class TestPrintPrinter(PrinterCase):
     def test05_system_default(self):
         """Test changing system default printer"""
         Printer = self.env['print.printer']
+        self.assertEqual(Printer.printers(), self.printer_default)
         Printer.spool_test_page()
         self.assertPrintedLpr('-T', ANY)
         self.printer_dotmatrix.set_system_default()
+        self.assertEqual(Printer.printers(), self.printer_dotmatrix)
         Printer.spool_test_page()
         self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY)
 
@@ -81,9 +102,15 @@ class TestPrintPrinter(PrinterCase):
         Printer.sudo(self.user_bob).spool_test_page()
         self.assertPrintedLpr('-T', ANY)
         self.printer_dotmatrix.sudo(self.user_alice).set_user_default()
+        self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
         self.assertEqual(self.user_alice.printer_id, self.printer_dotmatrix)
+        self.assertEqual(Printer.sudo(self.user_alice).printers(),
+                         self.printer_dotmatrix)
         self.printer_plotter.sudo(self.user_bob).set_user_default()
+        self.assertIn(self.printer_plotter, self.user_bob.printer_ids)
         self.assertEqual(self.user_bob.printer_id, self.printer_plotter)
+        self.assertEqual(Printer.sudo(self.user_bob).printers(),
+                         self.printer_plotter)
         Printer.sudo(self.user_alice).spool_test_page()
         self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY)
         Printer.sudo(self.user_bob).spool_test_page()
@@ -167,3 +194,88 @@ class TestPrintPrinter(PrinterCase):
         report = self.env.ref('print.action_report_test_page')
         self.printer_default.spool_report(self.printer_default.ids, report)
         self.assertPrintedLpr('-T', ANY)
+
+    def test18_full_name(self):
+        """Test full name"""
+        self.assertEqual(self.printer_dotmatrix.full_name, "Dot matrix")
+        self.printer_dotmatrix.group_id = self.group_downstairs
+        self.assertEqual(self.printer_dotmatrix.full_name,
+                         "Downstairs / Dot matrix")
+        self.group_downstairs.group_id = self.group_upstairs
+        self.assertEqual(self.printer_dotmatrix.full_name,
+                         "Upstairs / Downstairs / Dot matrix")
+
+    def test19_require_is_group(self):
+        """Test requirement for is_group to be set on groups"""
+        with self.assertRaises(ValidationError):
+            self.printer_dotmatrix.group_id = self.printer_plotter
+        with self.assertRaises(ValidationError):
+            self.printer_plotter.child_ids += self.printer_dotmatrix
+        self.printer_dotmatrix.group_id = self.group_upstairs
+        with self.assertRaises(ValidationError):
+            self.group_upstairs.is_group = False
+
+    def test20_single_per_group(self):
+        """Test requirement for user default printer to be unique per group"""
+        self.printer_dotmatrix.group_id = self.group_upstairs
+        self.printer_plotter.group_id = self.group_upstairs
+        self.printer_laser.group_id = self.group_downstairs
+        self.printer_inkjet.group_id = self.group_downstairs
+        self.user_alice.printer_ids = (self.printer_dotmatrix |
+                                       self.printer_laser)
+        with self.assertRaises(ValidationError):
+            self.user_alice.printer_ids = (self.printer_dotmatrix |
+                                           self.printer_plotter)
+
+    def test21_system_groups(self):
+        """Test selection via printer groups with system defaults"""
+        Printer = self.env['print.printer']
+        self.printer_dotmatrix.group_id = self.group_upstairs
+        self.printer_plotter.group_id = self.group_upstairs
+        self.printer_laser.group_id = self.group_downstairs
+        self.printer_inkjet.group_id = self.group_downstairs
+        self.assertFalse(self.group_upstairs.printers())
+        self.assertFalse(self.group_downstairs.printers())
+        self.printer_dotmatrix.set_system_default()
+        self.printer_laser.set_system_default()
+        self.printer_inkjet.set_system_default()
+        self.assertTrue(self.printer_default.is_default)
+        self.assertTrue(self.printer_dotmatrix.is_default)
+        self.assertFalse(self.printer_plotter.is_default)
+        self.assertFalse(self.printer_laser.is_default)
+        self.assertTrue(self.printer_inkjet.is_default)
+        self.assertEqual(Printer.printers(), self.printer_default)
+        self.assertEqual(self.group_upstairs.printers(),
+                         self.printer_dotmatrix)
+        self.assertEqual(self.group_downstairs.printers(),
+                         self.printer_inkjet)
+
+    def test22_user_groups(self):
+        """Test selection via printer groups with user defaults"""
+        Printer = self.env['print.printer']
+        self.printer_dotmatrix.group_id = self.group_upstairs
+        self.printer_plotter.group_id = self.group_upstairs
+        self.printer_laser.group_id = self.group_downstairs
+        self.printer_inkjet.group_id = self.group_downstairs
+        self.printer_dotmatrix.sudo(self.user_alice).set_user_default()
+        self.printer_plotter.sudo(self.user_alice).set_user_default()
+        self.printer_inkjet.sudo(self.user_alice).set_user_default()
+        self.printer_dotmatrix.sudo(self.user_bob).set_user_default()
+        self.printer_laser.sudo(self.user_bob).set_user_default()
+        self.printer_inkjet.sudo(self.user_bob).set_user_default()
+        self.group_downstairs.sudo(self.user_bob).set_user_default()
+        self.assertEqual(Printer.printers(), self.printer_default)
+        self.assertFalse(self.group_upstairs.printers())
+        self.assertFalse(self.group_downstairs.printers())
+        self.assertEqual(Printer.sudo(self.user_alice).printers(),
+                         self.printer_default)
+        self.assertEqual(Printer.sudo(self.user_bob).printers(),
+                         self.printer_inkjet)
+        self.assertEqual(self.group_upstairs.sudo(self.user_alice).printers(),
+                         self.printer_plotter)
+        self.assertEqual(self.group_downstairs.sudo(self.user_alice).printers(),
+                         self.printer_inkjet)
+        self.assertEqual(self.group_upstairs.sudo(self.user_bob).printers(),
+                         self.printer_dotmatrix)
+        self.assertEqual(self.group_downstairs.sudo(self.user_bob).printers(),
+                         self.printer_inkjet)
