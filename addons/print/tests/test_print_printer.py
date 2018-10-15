@@ -161,3 +161,9 @@ class TestPrintPrinter(PrinterCase):
         report = self.env.ref(xmlid)
         cpcl = report.render(self.printer_dotmatrix.ids)[0]
         self.assertCpclReport(cpcl, 'dotmatrix_test_page.xml')
+
+    def test17_spool_by_record(self):
+        """Test spooling ir.actions.report record (rather than report name)"""
+        report = self.env.ref('print.action_report_test_page')
+        self.printer_default.spool_report(self.printer_default.ids, report)
+        self.assertPrintedLpr('-T', ANY)
