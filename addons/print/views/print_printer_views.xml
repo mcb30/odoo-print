@@ -12,10 +12,19 @@
 	    <button name="spool_test_page" type="object" class="oe_highlight"
 		    string="Print Test Page"/>
 	    <button name="set_user_default" type="object"
-		    string="Set as User Default Printer"/>
+		    string="Set as User Default Printer"
+		    attrs="{'invisible':[('is_user_default','=',True)]}"/>
+	    <button name="clear_user_default" type="object" class="btn-danger"
+		    string="Clear as User Default Printer"
+		    attrs="{'invisible':[('is_user_default','=',False)]}"/>
 	    <button name="set_system_default" type="object"
 		    string="Set as System Default Printer"
-		    groups="base.group_system"/>
+		    groups="base.group_system"
+		    attrs="{'invisible':[('is_default','=',True)]}"/>
+	    <button name="clear_system_default" type="object" class="btn-danger"
+		    string="Clear as System Default Printer"
+		    groups="base.group_system"
+		    attrs="{'invisible':[('is_default','=',False)]}"/>
 	  </header>
 	  <sheet>
 	    <div class="oe_title">
@@ -31,7 +40,8 @@
 	    <group>
 	      <group name="properties" string="System Properties">
 		<field name="queue"/>
-		<field name="is_default"/>
+		<field name="is_default" readonly="1"/>
+		<field name="is_user_default"/>
 		<field name="is_group"/>
 	      </group>
 	      <group name="identity" string="Identification">
@@ -54,10 +64,12 @@
       <field name="name">print.printer.tree</field>
       <field name="model">print.printer</field>
       <field name="arch" type="xml">
-	<tree string="Printers">
+	<tree string="Printers" decoration-bf="is_default or is_user_default">
 	  <field name="full_name"/>
 	  <field name="queue"/>
 	  <field name="barcode"/>
+	  <field name="is_default"/>
+	  <field name="is_user_default"/>
 	</tree>
       </field>
     </record>

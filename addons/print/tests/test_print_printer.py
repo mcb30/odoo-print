@@ -102,11 +102,17 @@ class TestPrintPrinter(PrinterCase):
         Printer.sudo(self.user_bob).spool_test_page()
         self.assertPrintedLpr('-T', ANY)
         self.printer_dotmatrix.sudo(self.user_alice).set_user_default()
+        self.assertTrue(
+            self.printer_dotmatrix.sudo(self.user_alice).is_user_default
+        )
         self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
         self.assertEqual(self.user_alice.printer_id, self.printer_dotmatrix)
         self.assertEqual(Printer.sudo(self.user_alice).printers(),
                          self.printer_dotmatrix)
         self.printer_plotter.sudo(self.user_bob).set_user_default()
+        self.assertTrue(
+            self.printer_plotter.sudo(self.user_bob).is_user_default
+        )
         self.assertIn(self.printer_plotter, self.user_bob.printer_ids)
         self.assertEqual(self.user_bob.printer_id, self.printer_plotter)
         self.assertEqual(Printer.sudo(self.user_bob).printers(),

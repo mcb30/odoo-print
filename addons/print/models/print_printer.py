@@ -38,6 +38,8 @@ class Printer(models.Model):
     queue = fields.Char(string="Print Queue Name", index=True)
     is_default = fields.Boolean(string="System Default", index=True,
                                 default=False)
+    is_user_default = fields.Boolean(string="User Default",
+                                     compute='_compute_is_user_default')
     is_group = fields.Boolean(string="Printer Group", default=False)
     group_id = fields.Many2one('print.printer', string="Printer Group",
                                index=True, ondelete='cascade',
@@ -68,6 +70,12 @@ class Printer(models.Model):
                 )
             else:
                 printer.full_name = printer.name
+
+    @api.multi
+    def _compute_is_user_default(self):
+        """Calculate user default flag"""
+        for printer in self:
+            printer.is_user_default = printer in self.env.user.printer_ids
 
     @api.multi
     @api.constrains('is_group', 'group_id', 'child_ids')
@@ -179,15 +187,26 @@ class Printer(models.Model):
         return True
 
     @api.multi
+    def clear_user_default(self):
+        """Clear as user default printer"""
+        self.env.user.printer_ids -= self
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+    @api.multi
+    def clear_system_default(self):
+        """Clear as system default printer"""
+        self.write({'is_default': False})
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+    @api.multi
     def set_user_default(self):
         """Set as user default printer (within group, if applicable)"""
         self.ensure_one()
-        user = self.env.user
-        user.printer_ids -= user.printer_ids.filtered(
+        self.env.user.printer_ids.filtered(
             lambda x: x.group_id == self.group_id
-        )
-        user.printer_ids += self
-        return True
+        ).with_env(self.env).clear_user_default()
+        self.env.user.printer_ids += self
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     @api.multi
     def set_system_default(self):
@@ -196,6 +215,6 @@ class Printer(models.Model):
         self.search([
             ('is_default', '=', True),
             ('group_id', '=', self.group_id.id)
-        ]).write({'is_default': False})
+        ]).clear_system_default()
         self.is_default = True
-        return True
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
