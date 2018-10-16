@@ -12,17 +12,17 @@
 	    <button name="spool_test_page" type="object" class="oe_highlight"
 		    string="Print Test Page"/>
 	    <button name="set_user_default" type="object"
-		    string="Set as User Default Printer"
+		    string="Set as User Default"
 		    attrs="{'invisible':[('is_user_default','=',True)]}"/>
 	    <button name="clear_user_default" type="object" class="btn-danger"
-		    string="Clear as User Default Printer"
+		    string="Clear as User Default"
 		    attrs="{'invisible':[('is_user_default','=',False)]}"/>
 	    <button name="set_system_default" type="object"
-		    string="Set as System Default Printer"
+		    string="Set as System Default"
 		    groups="base.group_system"
 		    attrs="{'invisible':[('is_default','=',True)]}"/>
 	    <button name="clear_system_default" type="object" class="btn-danger"
-		    string="Clear as System Default Printer"
+		    string="Clear as System Default"
 		    groups="base.group_system"
 		    attrs="{'invisible':[('is_default','=',False)]}"/>
 	  </header>
