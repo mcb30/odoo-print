@@ -42,7 +42,7 @@
 		<field name="queue"/>
 		<field name="is_default" readonly="1"/>
 		<field name="is_user_default"/>
-		<field name="is_group"/>
+		<field name="is_group" invisible="1"/>
 	      </group>
 	      <group name="identity" string="Identification">
 		<field name="barcode"/>
@@ -87,8 +87,8 @@
 	  <field name="queue"/>
 	  <field name="group_id"/>
 	  <group string="Filters">
-	    <filter name="is_default" string="Is System Default Printer"
-		    domain="[('is_default', '=', 'True')]"/>
+	    <filter name="is_default" string="Is System Default"
+		    domain="[('is_default', '=', True)]"/>
 	  </group>
 	  <group string="Group by...">
 	    <filter name="by_queue" string="Queue" domain="[]"
@@ -100,13 +100,14 @@
       </field>
     </record>
 
-    <!-- Action window -->
-    <record id="printer_action" model="ir.actions.act_window">
+    <!-- Action window (printers) -->
+    <record id="printer_printer_action" model="ir.actions.act_window">
       <field name="name">Printers</field>
       <field name="type">ir.actions.act_window</field>
       <field name="res_model">print.printer</field>
       <field name="view_type">form</field>
       <field name="view_id" ref="printer_tree"/>
+      <field name="domain">[('is_group', '=', False)]</field>
       <field name="search_view_id" ref="printer_search"/>
       <field name="help" type="html">
 	<p class="oe_view_nocontent_create">
@@ -119,9 +120,34 @@
       </field>
     </record>
 
-    <!-- Menu item -->
-    <menuitem id="printer_menu" action="printer_action"
+    <!-- Action window (groups) -->
+    <record id="printer_group_action" model="ir.actions.act_window">
+      <field name="name">Groups</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">print.printer</field>
+      <field name="view_type">form</field>
+      <field name="view_id" ref="printer_tree"/>
+      <field name="context">{'default_is_group': True}</field>
+      <field name="domain">[('is_group', '=', True)]</field>
+      <field name="search_view_id" ref="printer_search"/>
+      <field name="help" type="html">
+	<p class="oe_view_nocontent_create">
+	  Click to create a Printer Group.
+	</p>
+	<p>
+	  Backend processes may print documents and reports directly
+	  to printers connected to the Odoo server.
+	</p>
+      </field>
+    </record>
+
+    <!-- Menu items -->
+    <menuitem id="printer_menu" name="Printing"
 	      parent="base.menu_administration" sequence="10"/>
+    <menuitem id="printer_printer_menu" action="printer_printer_action"
+	      parent="printer_menu" sequence="10"/>
+    <menuitem id="printer_group_menu" action="printer_group_action"
+	      parent="printer_menu" sequence="20"/>
 
   </data>
 </odoo>
