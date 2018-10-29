@@ -40,6 +40,7 @@
 	    <group>
 	      <group name="properties" string="System Properties">
 		<field name="queue"/>
+		<field name="report_type"/>
 		<field name="is_default" readonly="1"/>
 		<field name="is_user_default"/>
 		<field name="is_group" invisible="1"/>
@@ -67,6 +68,7 @@
 	<tree string="Printers" decoration-bf="is_default or is_user_default">
 	  <field name="full_name"/>
 	  <field name="queue"/>
+	  <field name="report_type"/>
 	  <field name="barcode"/>
 	  <field name="is_default"/>
 	  <field name="is_user_default"/>
@@ -86,6 +88,7 @@
 					 ('barcode','=',self)]"/>
 	  <field name="queue"/>
 	  <field name="group_id"/>
+	  <field name="report_type"/>
 	  <group string="Filters">
 	    <filter name="is_default" string="Is System Default"
 		    domain="[('is_default', '=', True)]"/>
@@ -95,6 +98,8 @@
 		    context="{'group_by':'queue'}"/>
 	    <filter name="by_group_id" string="Printer Group" domain="[]"
 		    context="{'group_by':'group_id'}"/>
+	    <filter name="by_report_type" string="Report Type" domain="[]"
+		    context="{'group_by':'report_type'}"/>
 	  </group>
 	</search>
       </field>

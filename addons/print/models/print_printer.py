@@ -36,6 +36,11 @@ class Printer(models.Model):
                             store=True, index=True)
     barcode = fields.Char(string="Barcode", index=True)
     queue = fields.Char(string="Print Queue Name", index=True)
+    report_type = fields.Selection([('qweb-pdf', "PDF"),
+                                    ('qweb-html', "HTML"),
+                                    ('qweb-cpcl', "CPCL/XML")],
+                                   string="Report Type", required=True,
+                                   default='qweb-pdf')
     is_default = fields.Boolean(string="System Default", index=True,
                                 default=False)
     is_user_default = fields.Boolean(string="User Default",
@@ -155,34 +160,59 @@ class Printer(models.Model):
     def spool_report(self, docids, report_name, data=None, title=None,
                      copies=1):
         """Spool report to printer"""
-        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-arguments, too-many-locals
 
-        # Generate report
+        # Identify reports
         if isinstance(report_name, models.BaseModel):
-            report = report_name
+            reports = report_name
         else:
             name = report_name
             Report = self.env['ir.actions.report']
-            report = Report._get_report_from_name(name)
-            if not report:
-                report = self.env.ref(name, raise_if_not_found=False)
-            if not report:
+            reports = Report._get_report_from_name(name)
+            if not reports:
+                reports = self.env.ref(name, raise_if_not_found=False)
+            if not reports:
                 raise UserError(_("Undefined report %s") % name)
-        document = report.render(docids, data)[0]
 
-        # Use report name and document IDs as title if no title specified
-        if title is None:
-            title = ("%s %s" % (report.name, str(docids)))
+        # Identify required report types
+        printers = self.printers(raise_if_not_found=True)
+        required = set(printers.mapped('report_type'))
+        available = set(reports.mapped('report_type'))
+        missing = required - available
+        if missing:
+            raise UserError(_("Missing reports of types: %s") %
+                            ', '.join(missing))
 
-        # Spool generated report to printer(s)
-        self.spool(document, title=title, copies=copies)
+        # Generate reports for each required report type
+        documents = {
+            x.report_type: (
+                ("%s %s" % (x.name, str(docids))) if title is None else title,
+                x.render(docids, data)[0]
+            )
+            for x in reports if x.report_type in required
+        }
+
+        # Send appropriate report to each printer
+        for printer in printers:
+            title, document = documents[printer.report_type]
+            printer.spool(document, title=title, copies=copies)
+
         return True
+
+    @api.model
+    def test_page_report(self):
+        """Get printer test pages"""
+        Report = self.env['ir.actions.report']
+        return Report.search([
+            ('model', '=', 'print.printer'),
+            ('report_name', '=like', 'print.%'),
+        ])
 
     @api.multi
     def spool_test_page(self):
         """Print test page"""
         for printer in self.printers(raise_if_not_found=True):
-            printer.spool_report(printer.ids, 'print.report_test_page',
+            printer.spool_report(printer.ids, self.test_page_report(),
                                  title="Test page")
         return True
 

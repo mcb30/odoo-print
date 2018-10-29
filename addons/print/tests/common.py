@@ -14,6 +14,7 @@ from odoo.tests import common
 MOCK_LPR = 'MOCK_LPR'
 HTML_MIMETYPE = guess_mimetype(b'<html><body></body></html>')
 XML_MIMETYPE = guess_mimetype(b'<?xml version="1.0"/>')
+PDF_MIMETYPE = 'application/pdf'
 
 
 @common.at_install(False)

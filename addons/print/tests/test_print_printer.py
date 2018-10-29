@@ -4,7 +4,7 @@ import os
 from unittest.mock import patch, ANY
 from reportlab.pdfgen.canvas import Canvas
 from odoo.exceptions import UserError, ValidationError
-from .common import PrinterCase, HTML_MIMETYPE, XML_MIMETYPE
+from .common import PrinterCase, HTML_MIMETYPE, PDF_MIMETYPE, XML_MIMETYPE
 
 
 class TestPrintPrinter(PrinterCase):
@@ -181,16 +181,18 @@ class TestPrintPrinter(PrinterCase):
         Report = self.env['ir.actions.report']
         report = Report._get_report_from_name('print.report_test_page')
         report.report_type = 'qweb-html'
-        Printer = self.env['print.printer']
-        Printer.spool_test_page()
+        self.printer_default.report_type = 'qweb-html'
+        self.printer_default.spool_test_page()
         self.assertPrintedLpr('-T', ANY, mimetype=HTML_MIMETYPE)
 
     def test16_cpcl(self):
         """Test generating CPCL/XML data"""
         self.printer_dotmatrix.barcode = 'DOTMATRIX'
+        self.printer_dotmatrix.report_type = 'qweb-cpcl'
         xmlid = 'print.action_report_test_page_cpcl'
-        self.printer_default.spool_report(self.printer_default.ids, xmlid)
-        self.assertPrintedLpr('-T', ANY, mimetype=XML_MIMETYPE)
+        self.printer_dotmatrix.spool_report(self.printer_dotmatrix.ids, xmlid)
+        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY,
+                              mimetype=XML_MIMETYPE)
         report = self.env.ref(xmlid)
         cpcl = report.render(self.printer_dotmatrix.ids)[0]
         self.assertCpclReport(cpcl, 'dotmatrix_test_page.xml')
@@ -285,3 +287,21 @@ class TestPrintPrinter(PrinterCase):
                          self.printer_dotmatrix)
         self.assertEqual(self.group_downstairs.sudo(self.user_bob).printers(),
                          self.printer_inkjet)
+
+    def test23_select_type(self):
+        """Test ability to automatically select correct report type"""
+        self.printer_dotmatrix.barcode = 'DOTMATRIX'
+        self.printer_dotmatrix.spool_test_page()
+        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY,
+                              mimetype=PDF_MIMETYPE)
+        self.printer_dotmatrix.report_type = 'qweb-cpcl'
+        self.printer_dotmatrix.spool_test_page()
+        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY,
+                              mimetype=XML_MIMETYPE)
+
+    def test24_wrong_type(self):
+        """Test UserError when report is incorrect type"""
+        self.printer_default.report_type = 'qweb-cpcl'
+        with self.assertRaises(UserError):
+            self.printer_default.spool_report(self.printer_default.ids,
+                                              'print.action_report_test_page')
