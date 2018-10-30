@@ -305,3 +305,16 @@ class TestPrintPrinter(PrinterCase):
         with self.assertRaises(UserError):
             self.printer_default.spool_report(self.printer_default.ids,
                                               'print.action_report_test_page')
+
+    def test25_ephemeral(self):
+        """Test clearing ephemeral printers"""
+        Printer = self.env['print.printer']
+        self.printer_dotmatrix.sudo(self.user_alice).set_user_default()
+        self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
+        Printer.sudo(self.user_alice).clear_ephemeral()
+        self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
+        self.printer_dotmatrix.is_ephemeral = True
+        Printer.sudo(self.user_bob).clear_ephemeral()
+        self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
+        Printer.sudo(self.user_alice).clear_ephemeral()
+        self.assertNotIn(self.printer_dotmatrix, self.user_alice.printer_ids)

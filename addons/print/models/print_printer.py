@@ -45,6 +45,7 @@ class Printer(models.Model):
                                 default=False)
     is_user_default = fields.Boolean(string="User Default",
                                      compute='_compute_is_user_default')
+    is_ephemeral = fields.Boolean(string="Clear On Logout", default=False)
     is_group = fields.Boolean(string="Printer Group", default=False)
     group_id = fields.Many2one('print.printer', string="Printer Group",
                                index=True, ondelete='cascade',
@@ -247,4 +248,12 @@ class Printer(models.Model):
             ('group_id', '=', self.group_id.id)
         ]).clear_system_default()
         self.is_default = True
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+    @api.model
+    def clear_ephemeral(self):
+        """Clear all ephemeral user default printers"""
+        self.env.user.printer_ids.filtered(
+            lambda x: x.is_ephemeral
+        ).with_env(self.env).clear_user_default()
         return {'type': 'ir.actions.client', 'tag': 'reload'}

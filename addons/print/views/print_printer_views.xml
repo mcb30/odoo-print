@@ -41,12 +41,13 @@
 	      <group name="properties" string="System Properties">
 		<field name="queue"/>
 		<field name="report_type"/>
+		<field name="barcode"/>
+	      </group>
+	      <group name="assignment" string="Assignment">
 		<field name="is_default" readonly="1"/>
 		<field name="is_user_default"/>
+		<field name="is_ephemeral"/>
 		<field name="is_group" invisible="1"/>
-	      </group>
-	      <group name="identity" string="Identification">
-		<field name="barcode"/>
 	      </group>
 	    </group>
 	    <notebook attrs="{'invisible':[('is_group','=',False)]}">
@@ -72,6 +73,7 @@
 	  <field name="barcode"/>
 	  <field name="is_default"/>
 	  <field name="is_user_default"/>
+	  <field name="is_ephemeral"/>
 	</tree>
       </field>
     </record>
