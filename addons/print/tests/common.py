@@ -1,5 +1,6 @@
 """Printing tests"""
 
+from contextlib import contextmanager
 from io import BytesIO
 import pathlib
 import tempfile
@@ -102,3 +103,54 @@ class PrinterCase(common.SavepointCase):
             self.assertEqual(actual, expected)
         finally:
             self.maxDiff = maxDiff
+
+
+@common.at_install(False)
+@common.post_install(True)
+class PrinterHttpCase(common.HttpCase):
+    """Base HTTP test case for printing"""
+
+    def setUp(self):
+        super().setUp()
+
+        # Use default test cursor for default environment
+        def restore(cr=self.cr, env=self.env):
+            """Restore original cursor and environment"""
+            self.env = env
+            self.cr = cr
+        self.cr = self.registry.cursor()
+        self.env = self.env(self.cr)
+        self.addCleanup(restore)
+
+    @contextmanager
+    def release(self):
+        """Temporarily release test cursor
+
+        Temporarily release the test cursor to allow for use by
+        external threads (e.g. the thread handling an HTTP request).
+        """
+
+        # Commit (i.e. create a savepoint) so that any changes are
+        # visible to external threads
+        self.cr.commit()
+
+        # Release our thread's cursor lock
+        self.cr.release()
+
+        try:
+
+            # Allow external thread(s) to use the cursor
+            yield
+
+        finally:
+
+            # Reacquire our thread's cursor lock
+            self.cr.acquire()
+
+            # Flush cache so that we pick up any external changes
+            self.env.clear()
+
+    def url_open(self, *args, **kwargs):
+        # pylint: disable=arguments-differ
+        with self.release():
+            return super().url_open(*args, **kwargs)
