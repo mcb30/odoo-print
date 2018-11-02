@@ -27,6 +27,7 @@ Key Features
         'report/test_page_reports.xml',
         'views/res_users_views.xml',
         'views/print_printer_views.xml',
+        'views/print_strategy_views.xml',
         'data/print_printer_data.xml',
         'data/set_default_printer.yml'
     ],

@@ -5,7 +5,7 @@ from io import BytesIO
 import pathlib
 import tempfile
 import sys
-from unittest.mock import patch, Mock, ANY
+from unittest.mock import patch, Mock, ANY, call
 from lxml import etree
 from odoo.modules.module import get_resource_from_path, get_resource_path
 from odoo.tools import config
@@ -82,6 +82,17 @@ class PrinterCase(common.SavepointCase):
         self.mock_lpr.communicate.assert_called_once()
         document = self.mock_lpr.communicate.call_args[0][0]
         self.assertEqual(guess_mimetype(document), mimetype)
+        self.mock_lpr.reset_mock()
+        self.mock_subprocess.Popen.reset_mock()
+
+    def assertPrintedLprMulti(self, *seq_args):
+        """Assert that ``lpr`` was invoked with the sequence of args lists"""
+        def seq_calls():
+            """Generate the sequence of calls expected for ``seq_args``."""
+            for args in seq_args:
+                yield call([MOCK_LPR, *args], stdin=ANY, stdout=ANY, stderr=ANY)
+                yield call().communicate(ANY)
+        self.mock_subprocess.Popen.assert_has_calls(seq_calls())
         self.mock_lpr.reset_mock()
         self.mock_subprocess.Popen.reset_mock()
 

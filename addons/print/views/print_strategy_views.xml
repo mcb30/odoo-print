@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<odoo>
+  <data>
+
+    <!-- Form view -->
+    <record id="print_strategy_form" model="ir.ui.view">
+      <field name="name">print.strategy.form</field>
+      <field name="model">print.strategy</field>
+      <field name="arch" type="xml">
+        <form string="Print Strategy">
+          <sheet>
+            <div class="oe_title">
+              <label for="name" class="oe_edit_only"/>
+              <h1>
+                <field name="name"/>
+              </h1>
+            </div>
+            <group name="basic">
+              <field name="report_id"/>
+              <field name="printer_id"/>
+              <field name="safety"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <!-- Tree view -->
+    <record id="print_strategy_tree" model="ir.ui.view">
+      <field name="name">print.strategy.tree</field>
+      <field name="model">print.strategy</field>
+      <field name="arch" type="xml">
+        <tree string="Print Strategies">
+          <field name="name"/>
+          <field name="report_id"/>
+          <field name="printer_id"/>
+          <field name="safety"/>
+        </tree>
+      </field>
+    </record>
+
+    <!-- Search filter -->
+    <record id="print_strategy_search" model="ir.ui.view">
+      <field name="name">print.strategy.search</field>
+      <field name="model">print.strategy</field>
+      <field name="arch" type="xml">
+        <search string="Search Print Strategies">
+          <field name="name" string="Name"
+                 filter_domain="[('name','ilike',self)]"/>
+          <field name="report_id"/>
+          <field name="printer_id"/>
+          <field name="safety" string="Safety Catch"
+                 filter_domain="[('safety','like',self)]"/>
+          <group string="Group by...">
+            <filter name="by_printer" string="Printer" domain="[]"
+                    context="{'group_by':'printer_id'}"/>
+            <filter name="by_safety" string="Safety Catch" domain="[]"
+                    context="{'group_by':'safety'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <!-- Action window (automated print strategy) -->
+    <record id="print_strategy_action" model="ir.actions.act_window">
+      <field name="name">Automated Printing</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">print.strategy</field>
+      <field name="view_type">form</field>
+      <field name="view_id" ref="print_strategy_tree"/>
+      <field name="search_view_id" ref="print_strategy_search"/>
+      <field name="help" type="html">
+        <p class="oe_view_nocontent">
+          No automated printing strategies are configured.
+        </p>
+      </field>
+    </record>
+
+    <!-- Menu items -->
+    <menuitem id="print_strategy_menu" action="print_strategy_action"
+              parent="printer_menu" sequence="100"/>
+
+  </data>
+</odoo>
