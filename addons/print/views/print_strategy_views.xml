@@ -63,7 +63,7 @@
 
     <!-- Action window (automated print strategy) -->
     <record id="print_strategy_action" model="ir.actions.act_window">
-      <field name="name">Automated Printing</field>
+      <field name="name">General</field>
       <field name="type">ir.actions.act_window</field>
       <field name="res_model">print.strategy</field>
       <field name="view_type">form</field>
@@ -80,8 +80,12 @@
     </record>
 
     <!-- Menu items -->
+    <menuitem id="automated_printing_menu"
+              name="Automated Printing"
+              parent="base.menu_administration" sequence="20"/>
+
     <menuitem id="print_strategy_menu" action="print_strategy_action"
-              parent="printer_menu" sequence="100"/>
+              parent="automated_printing_menu" sequence="10"/>
 
   </data>
 </odoo>
