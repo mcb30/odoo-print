@@ -63,12 +63,19 @@ class PrinterCase(common.SavepointCase):
         self.mock_lpr.returncode = 0
         self.mock_subprocess.Popen.return_value = self.mock_lpr
 
+        # Force test_enable to True (which is not necessarily the case
+        # when tests are run via the "-f" command-line option) to
+        # prevent ir.actions.report from committing the assets bundle
+        # and hence releasing the savepoint.
+        #
         # Create mock test_report_directory to ensure that
         # ir.actions.report.render_qweb_pdf() will actually attempt to
         # generate a PDF
+        #
         self.tempdir = tempfile.TemporaryDirectory()
         self.addCleanup(self.tempdir.cleanup)
         patch_config = patch.dict(config.options, {
+            'test_enable': True,
             'test_report_directory': self.tempdir.name,
         })
         patch_config.start()
