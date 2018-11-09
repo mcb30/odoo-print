@@ -36,7 +36,10 @@ class PrinterCase(common.SavepointCase):
         # may be a derived class in a different module).
         module_file = sys.modules[cls.__module__].__file__
         module = get_resource_from_path(module_file)[0]
-        cls.files = pathlib.Path(get_resource_path(module, 'tests', 'files'))
+
+        path = get_resource_path(module, 'tests', 'files')
+        if path:
+            cls.files = pathlib.Path(path)
 
     def setUp(self):
         super().setUp()
