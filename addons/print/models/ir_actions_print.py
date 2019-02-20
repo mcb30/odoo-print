@@ -43,9 +43,6 @@ class IrActionsPrint(models.Model):
         obj = action.env[active_model].browse(active_id)
         # execute strategies for printing the object
         for strategy in self.env[self.strategy_id.model].strategies(obj):
-            _logger.info('executing %s action with strategy %s for %s id %d',
-                         action.state, strategy.name,
-                         active_model, active_id)
             if not strategy.enabled():
                 continue
             # the strategy model must produce print strategies
@@ -54,6 +51,10 @@ class IrActionsPrint(models.Model):
             records = strategy.records(obj, context)
             # print
             if records is not None:
+                _logger.info(
+                    'executing %s action with strategy %s for %s id %d',
+                    action.state, strategy.name,
+                    active_model, active_id)
                 printer.spool_report(records.ids, report)
 
 class PrintStrategy(models.Model):
