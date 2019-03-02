@@ -48,6 +48,7 @@
 		<field name="is_user_default"/>
 		<field name="is_ephemeral"/>
 		<field name="is_group" invisible="1"/>
+		<field name="user_ids" widget="many2many_tags"/>
 	      </group>
 	    </group>
 	    <notebook attrs="{'invisible':[('is_group','=',False)]}">
@@ -91,6 +92,7 @@
 	  <field name="queue"/>
 	  <field name="group_id"/>
 	  <field name="report_type"/>
+	  <field name="user_ids"/>
 	  <group string="Filters">
 	    <filter name="is_default" string="Is System Default"
 		    domain="[('is_default', '=', True)]"/>

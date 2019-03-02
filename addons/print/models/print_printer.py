@@ -41,6 +41,7 @@ class Printer(models.Model):
                                     ('qweb-cpcl', "CPCL/XML")],
                                    string="Report Type", required=True,
                                    default='qweb-pdf')
+    user_ids = fields.Many2many('res.users', string="Users")
     is_default = fields.Boolean(string="System Default", index=True,
                                 default=False)
     is_user_default = fields.Boolean(string="User Default",

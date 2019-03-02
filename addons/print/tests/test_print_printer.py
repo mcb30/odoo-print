@@ -106,6 +106,7 @@ class TestPrintPrinter(PrinterCase):
             self.printer_dotmatrix.sudo(self.user_alice).is_user_default
         )
         self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
+        self.assertIn(self.user_alice, self.printer_dotmatrix.user_ids)
         self.assertEqual(self.user_alice.printer_id, self.printer_dotmatrix)
         self.assertEqual(Printer.sudo(self.user_alice).printers(),
                          self.printer_dotmatrix)
@@ -114,6 +115,7 @@ class TestPrintPrinter(PrinterCase):
             self.printer_plotter.sudo(self.user_bob).is_user_default
         )
         self.assertIn(self.printer_plotter, self.user_bob.printer_ids)
+        self.assertIn(self.user_bob, self.printer_plotter.user_ids)
         self.assertEqual(self.user_bob.printer_id, self.printer_plotter)
         self.assertEqual(Printer.sudo(self.user_bob).printers(),
                          self.printer_plotter)
@@ -311,10 +313,14 @@ class TestPrintPrinter(PrinterCase):
         Printer = self.env['print.printer']
         self.printer_dotmatrix.sudo(self.user_alice).set_user_default()
         self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
+        self.assertIn(self.user_alice, self.printer_dotmatrix.user_ids)
         Printer.sudo(self.user_alice).clear_ephemeral()
         self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
+        self.assertIn(self.user_alice, self.printer_dotmatrix.user_ids)
         self.printer_dotmatrix.is_ephemeral = True
         Printer.sudo(self.user_bob).clear_ephemeral()
         self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
+        self.assertIn(self.user_alice, self.printer_dotmatrix.user_ids)
         Printer.sudo(self.user_alice).clear_ephemeral()
         self.assertNotIn(self.printer_dotmatrix, self.user_alice.printer_ids)
+        self.assertNotIn(self.user_alice, self.printer_dotmatrix.user_ids)
