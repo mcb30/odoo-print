@@ -101,9 +101,9 @@ class Printer(models.Model):
         """Determine printers to use"""
 
         # Start with explicitly specified list of printers, falling
-        # back to user's default printer, falling back to system
+        # back to user's default printers, falling back to system
         # default printer
-        printers = (self or self.env.user.printer_id or
+        printers = (self or self.env.user.printer_ids or
                     self.search([('is_default', '=', True),
                                  ('group_id', '=', False)]))
 
@@ -178,11 +178,11 @@ class Printer(models.Model):
 
         # Identify required report types
         printers = self.printers(raise_if_not_found=True)
-        required = set(printers.mapped('report_type'))
-        available = set(reports.mapped('report_type'))
+        available = set(printers.mapped('report_type'))
+        required = set(reports.mapped('report_type'))
         missing = required - available
         if missing:
-            raise UserError(_("Missing reports of types: %s") %
+            raise UserError(_("Missing printer for report types: %s") %
                             ', '.join(missing))
 
         # Generate reports for each required report type
@@ -196,8 +196,9 @@ class Printer(models.Model):
 
         # Send appropriate report to each printer
         for printer in printers:
-            title, document = documents[printer.report_type]
-            printer.spool(document, title=title, copies=copies)
+            if printer.report_type in documents:
+                title, document = documents[printer.report_type]
+                printer.spool(document, title=title, copies=copies)
 
         return True
 
@@ -213,9 +214,9 @@ class Printer(models.Model):
     @api.multi
     def spool_test_page(self):
         """Print test page"""
-        for printer in self.printers(raise_if_not_found=True):
-            printer.spool_report(printer.ids, self.test_page_report(),
-                                 title="Test page")
+        printers = self.printers(raise_if_not_found=True)
+        printers.spool_report(printers.ids, self.test_page_report(),
+                             title="Test page")
         return True
 
     @api.multi
