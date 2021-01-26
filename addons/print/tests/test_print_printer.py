@@ -55,6 +55,17 @@ class TestPrintPrinter(PrinterCase):
             'login': 'bob',
         })
 
+    def print_test_report(self, copies=1):
+        self.printer_dotmatrix.barcode = 'DOTMATRIX'
+        self.printer_dotmatrix.report_type = 'qweb-cpcl'
+        xmlid = 'print.action_report_test_page_cpcl'
+        self.printer_dotmatrix.spool_report(self.printer_dotmatrix.ids, xmlid, copies=copies)
+        qty_args = ['-#', str(copies)] if copies > 1 else []
+        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY,
+                              mimetype=XML_MIMETYPE, *qty_args)
+        render_data = {'copies': copies} if copies > 1 else None
+        return self.env.ref(xmlid).render(self.printer_dotmatrix.ids, render_data)[0]
+
     def test01_spool_test_page(self):
         """Test printing a test page to unspecified (default) printer"""
         Printer = self.env['print.printer']
@@ -189,14 +200,7 @@ class TestPrintPrinter(PrinterCase):
 
     def test16_cpcl(self):
         """Test generating CPCL/XML data"""
-        self.printer_dotmatrix.barcode = 'DOTMATRIX'
-        self.printer_dotmatrix.report_type = 'qweb-cpcl'
-        xmlid = 'print.action_report_test_page_cpcl'
-        self.printer_dotmatrix.spool_report(self.printer_dotmatrix.ids, xmlid)
-        self.assertPrintedLpr('-P', 'dotmatrix', '-T', ANY,
-                              mimetype=XML_MIMETYPE)
-        report = self.env.ref(xmlid)
-        cpcl = report.render(self.printer_dotmatrix.ids)[0]
+        cpcl = self.print_test_report()
         self.assertCpclReport(cpcl, 'dotmatrix_test_page.xml')
 
     def test17_spool_by_record(self):
@@ -324,3 +328,10 @@ class TestPrintPrinter(PrinterCase):
         Printer.sudo(self.user_alice).clear_ephemeral()
         self.assertNotIn(self.printer_dotmatrix, self.user_alice.printer_ids)
         self.assertNotIn(self.user_alice, self.printer_dotmatrix.user_ids)
+
+    def test26_cpcl_qty(self):
+        """Test generating CPCL/XML data"""
+        cpcl = self.print_test_report(copies=2)
+        self.assertCpclReport(cpcl, 'dotmatrix_test_page_qty2.xml')
+        cpcl = self.print_test_report(copies=5)
+        self.assertCpclReport(cpcl, 'dotmatrix_test_page_qty5.xml')

@@ -11,6 +11,18 @@ class IrActionsReport(models.Model):
 
     report_type = fields.Selection(selection_add=[('qweb-cpcl', 'CPCL')])
 
+    @staticmethod
+    def add_print_qty(cpcl, copies):
+        """ Searches the CPCL tree for the print statement and adds
+        the number of copies to it if it is not already present
+        """
+        prints = cpcl.findall("{http://www.fensystems.co.uk/xmlns/cpcl}print")
+        if copies > 1 and prints:
+            for el in prints:
+                if not el.attrib.get('qty', False):
+                    el.set('qty', str(copies))
+        return cpcl
+
     @api.multi
     def render_qweb_cpcl(self, docids, data=None):
         """Render CPCL/XML report"""
@@ -21,4 +33,11 @@ class IrActionsReport(models.Model):
             remove = [x for x in attrs if x.startswith('data-')]
             for attr in remove:
                 del attrs[attr]
-        return (etree.tostring(cpcl, xml_declaration=True), 'cpcl')
+
+        # Add print copies to CPCL template
+        copies = 1
+        if data:
+            copies = data.get('copies', 1)
+        cpcl = self.add_print_qty(cpcl, copies)
+
+        return etree.tostring(cpcl, xml_declaration=True), 'cpcl'
