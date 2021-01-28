@@ -97,28 +97,47 @@ class Printer(models.Model):
                                       printer.name)
 
     @api.multi
-    def printers(self, raise_if_not_found=False):
+    def printers(self, report_type=None, raise_if_not_found=False):
         """Determine printers to use"""
+        if self:
+            # Printers are specified in self
+            printers = self
 
-        # Start with explicitly specified list of printers, falling
-        # back to user's default printer, falling back to system
-        # default printer
-        printers = (self or self.env.user.printer_id or
-                    self.search([('is_default', '=', True),
-                                 ('group_id', '=', False)]))
+            if report_type:
+                # Filter out printers which don't match the report type
+                printers = self.filtered(lambda p: p.report_type == report_type)
+        else:
+            # Fall back to user default
+            printers = self.env.user.get_printer(report_type)
+
+            if not printers:
+                # Fall back to system default
+                printers = self.get_system_default_printer(report_type=report_type)
 
         # Iteratively reduce any printer groups to their user or
         # system default printers
-        while printers.filtered(lambda x: x.is_group):
-            printers = printers.mapped(lambda p: (
-                p if not p.is_group else
-                ((p.child_ids & self.env.user.printer_ids) or
-                 (p.child_ids.filtered(lambda x: x.is_default)))
-            ))
+        while printers.filtered(lambda p: p.is_group):
+            printers = printers.mapped(
+                lambda p: (
+                    p
+                    if not p.is_group and (report_type is None or p.report_type == report_type)
+                    else (
+                        (p.child_ids & self.env.user.printer_ids)
+                        or (p.child_ids.filtered(lambda x: x.is_default))
+                    )
+                )
+            )
 
         # Fail if no printers were found, if applicable
         if raise_if_not_found and not printers:
-            raise UserError(_("No default printer specified"))
+            error_msg = _("No default printer specified")
+            if report_type:
+                report_type_label = self.get_report_type_label(report_type)
+                error_msg += (
+                    _(" for %s report format") % report_type_label
+                )
+
+            raise UserError(error_msg)
 
         return printers
 
@@ -159,8 +178,7 @@ class Printer(models.Model):
         return True
 
     @api.multi
-    def spool_report(self, docids, report_name, data=None, title=None,
-                     copies=1):
+    def spool_report(self, docids, report_name, data=None, title=None, copies=1):
         """Spool report to printer"""
         # pylint: disable=too-many-arguments, too-many-locals
 
@@ -169,7 +187,7 @@ class Printer(models.Model):
             reports = report_name
         else:
             name = report_name
-            Report = self.env['ir.actions.report']
+            Report = self.env["ir.actions.report"]
             reports = Report._get_report_from_name(name)
             if not reports:
                 reports = self.env.ref(name, raise_if_not_found=False)
@@ -177,13 +195,31 @@ class Printer(models.Model):
                 raise UserError(_("Undefined report %s") % name)
 
         # Identify required report types
-        printers = self.printers(raise_if_not_found=True)
-        required = set(printers.mapped('report_type'))
-        available = set(reports.mapped('report_type'))
-        missing = required - available
+        report_types = set(reports.mapped("report_type"))
+
+        # If there is only 1 report type to print out then raise an error if printer not found,
+        # otherwise continue checking for other report types
+        printer_raise_if_not_found = len(report_types) == 1
+
+        # Identify printer to use for each report type, only include report type in dictionary
+        # if a printer is identified
+        printers_by_report_type = {
+            rt: p
+            for rt in report_types
+            for p in (self.printers(raise_if_not_found=printer_raise_if_not_found, report_type=rt))
+            if p
+        }
+
+        if printers_by_report_type:
+            required_types = set(printers_by_report_type.keys())
+            missing = required_types - report_types
+        else:
+            missing = report_types
+
         if missing:
-            raise UserError(_("Missing reports of types: %s") %
-                            ', '.join(missing))
+            # Get labels of missing report types from selection list
+            missing_labels = [self.get_report_type_label(rt) for rt in missing]
+            raise UserError(_("Missing reports of types: %s") % ", ".join(missing_labels))
 
         # CPCL reports require number of copies passed into the template via data
         cpcl_data = {'copies': copies}
@@ -197,12 +233,11 @@ class Printer(models.Model):
                 x.render(docids, cpcl_data if x.report_type == "qweb-cpcl" else data)[0],
             )
             for x in reports
-            if x.report_type in required
         }
 
         # Send appropriate report to each printer
-        for printer in printers:
-            title, document = documents[printer.report_type]
+        for report_type, printer in printers_by_report_type.items():
+            title, document = documents[report_type]
             printer.spool(document, title=title, copies=copies)
 
         return True
@@ -241,7 +276,7 @@ class Printer(models.Model):
         """Set as user default printer (within group, if applicable)"""
         self.ensure_one()
         self.env.user.printer_ids.filtered(
-            lambda x: x.group_id == self.group_id
+            lambda x: x.group_id == self.group_id and x.report_type == self.report_type
         ).with_env(self.env).clear_user_default()
         self.env.user.printer_ids += self
         return {'type': 'ir.actions.client', 'tag': 'reload'}
@@ -264,3 +299,16 @@ class Printer(models.Model):
             lambda x: x.is_ephemeral
         ).with_env(self.env).clear_user_default()
         return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+    def get_report_type_label(self, report_type):
+        """Get the label of the supplied report type code"""
+        # Use `_description_selection` to ensure translations are used
+        report_type_labels = dict(self._fields["report_type"]._description_selection(self.env))
+        return report_type_labels.get(report_type)
+
+    def get_system_default_printer(self, report_type=None):
+        """Find and return system default printer for the supplied report_type, if specified"""
+        system_default_args = [("is_default", "=", True), ("group_id", "=", False)]
+        if report_type:
+            system_default_args.append(("report_type", "=", report_type))
+        return self.search(system_default_args, limit=1)
