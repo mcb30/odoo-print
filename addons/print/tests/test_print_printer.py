@@ -118,16 +118,18 @@ class TestPrintPrinter(PrinterCase):
         )
         self.assertIn(self.printer_dotmatrix, self.user_alice.printer_ids)
         self.assertIn(self.user_alice, self.printer_dotmatrix.user_ids)
-        self.assertEqual(self.user_alice.printer_id, self.printer_dotmatrix)
+        self.assertEqual(self.user_alice.get_printer(self.printer_dotmatrix.report_type), self.printer_dotmatrix)
+
         self.assertEqual(Printer.sudo(self.user_alice).printers(),
                          self.printer_dotmatrix)
+
         self.printer_plotter.sudo(self.user_bob).set_user_default()
         self.assertTrue(
             self.printer_plotter.sudo(self.user_bob).is_user_default
         )
         self.assertIn(self.printer_plotter, self.user_bob.printer_ids)
         self.assertIn(self.user_bob, self.printer_plotter.user_ids)
-        self.assertEqual(self.user_bob.printer_id, self.printer_plotter)
+        self.assertEqual(self.user_bob.get_printer(self.printer_plotter.report_type), self.printer_plotter)
         self.assertEqual(Printer.sudo(self.user_bob).printers(),
                          self.printer_plotter)
         Printer.sudo(self.user_alice).spool_test_page()
