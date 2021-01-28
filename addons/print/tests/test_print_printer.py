@@ -65,6 +65,51 @@ class TestPrintPrinter(PrinterCase):
                               mimetype=XML_MIMETYPE, *qty_args)
         render_data = {'copies': copies} if copies > 1 else None
         return self.env.ref(xmlid).render(self.printer_dotmatrix.ids, render_data)[0]
+    @classmethod
+    def create_printer(cls, name, **kwargs):
+        """Create and return Printer record"""
+        Printer = cls.env["print.printer"]
+        vals = {
+            "name": name,
+        }
+        vals.update(kwargs)
+        return Printer.create(vals)
+
+    def printer_is_user_default(self, printer, user):
+        """
+        Returns True if supplied printer is a default for supplied user, otherwise False.
+
+        Required as `is_user_default` computed field is not reliable,
+        due to how computed fields are handled in unit tests.
+        """
+        printer.ensure_one()
+        user.ensure_one()
+
+        return printer in user.printer_ids
+
+    def assert_printer_user_default(self, printer, user, expected):
+        """
+        :args:
+            - printer: Singleton `print.printer` record
+            - user: Singleton `res.users` record
+            - expected: Boolean value for whether the supplied printer is expected to be a default
+                        for supplied user                        
+        """
+        printer.ensure_one()
+        user.ensure_one()
+
+        expected_msg = "should be" if expected else "should not be"
+        assert_msg = f"Printer: {printer.name} {expected_msg} user default for user: {user.name}"
+
+        self.assertEqual(self.printer_is_user_default(printer, user), expected, assert_msg)
+
+    def assert_printer_is_user_default(self, printer, user):
+        """Assert that supplied printer is default for supplied user"""
+        return self.assert_printer_user_default(printer, user, True)
+
+    def assert_printer_is_not_user_default(self, printer, user):
+        """Assert that supplied printer is not default for supplied user"""
+        return self.assert_printer_user_default(printer, user, False)
 
     def test01_spool_test_page(self):
         """Test printing a test page to unspecified (default) printer"""
@@ -337,3 +382,29 @@ class TestPrintPrinter(PrinterCase):
         self.assertCpclReport(cpcl, 'dotmatrix_test_page_qty2.xml')
         cpcl = self.print_test_report(copies=5)
         self.assertCpclReport(cpcl, 'dotmatrix_test_page_qty5.xml')
+
+    def test27_user_one_default_group_per_report_type(self):
+        """Test that a user can have one default group per report type"""
+        # Create two CPCL printer groups
+        group_attic = self.create_printer("Attic", is_group=True, report_type="qweb-cpcl")
+        group_basement = self.create_printer("Basement", is_group=True, report_type="qweb-cpcl")
+
+        # Set upstairs as default PDF printer group and attic as default CPCL printer group
+        self.group_upstairs.sudo(self.user_alice).set_user_default()
+        group_attic.sudo(self.user_alice).set_user_default()
+
+        # Assert that default printer groups are correctly set
+        self.assert_printer_is_user_default(self.group_upstairs, self.user_alice)
+        self.assert_printer_is_user_default(group_attic, self.user_alice)
+
+        self.assert_printer_is_not_user_default(self.group_downstairs, self.user_alice)
+        self.assert_printer_is_not_user_default(group_basement, self.user_alice)
+
+        # Set basement as new default CPCL printer group, attic should no longer be default
+        group_basement.sudo(self.user_alice).set_user_default()
+
+        self.assert_printer_is_user_default(group_basement, self.user_alice)
+        self.assert_printer_is_not_user_default(group_attic, self.user_alice)
+
+        # Default PDF printer should be unaffected
+        self.assert_printer_is_user_default(self.group_upstairs, self.user_alice)
