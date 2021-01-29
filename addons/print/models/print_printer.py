@@ -185,13 +185,19 @@ class Printer(models.Model):
             raise UserError(_("Missing reports of types: %s") %
                             ', '.join(missing))
 
+        # CPCL reports require number of copies passed into the template via data
+        cpcl_data = {'copies': copies}
+        if data:
+            cpcl_data.update(data)
+
         # Generate reports for each required report type
         documents = {
             x.report_type: (
                 ("%s %s" % (x.name, str(docids))) if title is None else title,
-                x.render(docids, data)[0]
+                x.render(docids, cpcl_data if x.report_type == "qweb-cpcl" else data)[0],
             )
-            for x in reports if x.report_type in required
+            for x in reports
+            if x.report_type in required
         }
 
         # Send appropriate report to each printer

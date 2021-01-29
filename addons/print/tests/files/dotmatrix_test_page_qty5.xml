@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<cpcl xmlns="http://www.fensystems.co.uk/xmlns/cpcl">
+  <print height="50" qty="5">
+    <in-millimeters/>
+    <center/>
+    <contrast>3</contrast>
+    <text y="1" size="2">Printer Test Page</text>
+    <barcode y="10" width="0.5" height="20">DOTMATRIX</barcode>
+    <text y="33" size="2">Dot matrix</text>
+    <form/>
+  </print>
+</cpcl>
