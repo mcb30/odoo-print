@@ -54,7 +54,7 @@
 	    <notebook attrs="{'invisible':[('is_group','=',False)]}">
 	      <page string="Grouped Printers">
 		<field name="child_ids"
-		       context="{'default_group_id': active_id}"/>
+		       context="{'default_group_id': active_id, 'default_report_type': report_type}"/>
 	      </page>
 	    </notebook>
 	  </sheet>
