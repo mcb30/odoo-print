@@ -1,5 +1,6 @@
 """Printing tests"""
 
+import logging
 import os
 from unittest.mock import patch, ANY
 from reportlab.pdfgen.canvas import Canvas
@@ -408,3 +409,20 @@ class TestPrintPrinter(PrinterCase):
 
         # Default PDF printer should be unaffected
         self.assert_printer_is_user_default(self.group_upstairs, self.user_alice)
+
+    def test28_abandons_print_if_zero_copies_requested(self):
+        """If zero copies are requested not print should take place."""
+        for num_copies in range(0, -2, -1):
+            with self.subTest(num_copies=num_copies):
+                # Odoo changes logging.INFO to 25 in netsvc.py; it seems the only way
+                # to assert the log level is to reference the module attribute
+                # directly.
+                with self.assertLogs('odoo.addons.print.models.print_printer', level=logging.INFO) as cm:
+                    self.printer_default.spool_report(self.printer_default.ids,
+                                                      'print.report_test_page',
+                                                      copies=num_copies)
+                    self.mock_subprocess.Popen.assert_not_called()
+                    self.mock_subprocess.Popen.reset_mock()
+                self.assertEqual(
+                    cm.output,
+                    ['INFO:odoo.addons.print.models.print_printer:Zero or fewer copies requested, nothing will be printed.'])

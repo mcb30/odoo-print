@@ -182,6 +182,10 @@ class Printer(models.Model):
         """Spool report to printer"""
         # pylint: disable=too-many-arguments, too-many-locals
 
+        if copies <= 0:
+            _logger.info(_('Zero or fewer copies requested, nothing will be printed.'))
+            return True
+
         # Identify reports
         if isinstance(report_name, models.BaseModel):
             reports = report_name
