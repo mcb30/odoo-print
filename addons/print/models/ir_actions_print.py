@@ -38,6 +38,9 @@ class IrActionsPrint(models.Model):
         """Print a report using the print strategies for the context object."""
         # get the context object
         context = action.env.context
+        if 'skip_printing' in context and context['skip_printing']:
+            _logger.info('Skipping printing due to context switch')
+            return False
         active_model = context['active_model']
         active_id = context['active_id']
         obj = action.env[active_model].browse(active_id)
