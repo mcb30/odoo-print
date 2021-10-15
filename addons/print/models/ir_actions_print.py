@@ -109,10 +109,14 @@ class PrintStrategy(models.Model):
     def enabled(self):
         """Return True if a print strategy is enabled, False otherwise."""
         self.ensure_one()
-        if self.safety:
+        if not self.safety:
+            _logger.info('%s %s disabled, enable by configuring safety.',
+                             self._name, self.name)
+            return False
+        else:
             section, _sep, key = self.safety.rpartition('.')
             if not config.get_misc(section or self._name, key):
-                _logger.info('%s %s disabled, enable by configuring safety %s',
+                _logger.info('%s %s disabled, enable by configuring safety %s in config file.',
                              self._name, self.name,
                              '.'.join((section or self._name, key)))
                 return False

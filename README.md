@@ -26,3 +26,16 @@ associate it as the current user's default printer:
     Printer = self.env['print.printer']
     printer = Printer.search([('barcode', '=', 'PRNLAB02')])
     printer.set_user_default()
+
+
+## Safety Catch
+
+In order to allow the print module to print:
+- A safety catch needs to be set on the Print Strategy.
+- This same safety catch needs to be configured on the odoo config file and return a truthy value.
+```
+[print]
+print_safety_catch=True
+```
+- If no safety is configured nothing will be printed.
+- If only one part of the safety is configured nothing will be printed.
