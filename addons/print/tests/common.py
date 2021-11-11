@@ -42,6 +42,10 @@ class PrinterCase(common.SavepointCase):
         if path:
             cls.files = pathlib.Path(path)
 
+        cls.safety = "print.default_test_print"
+        # Enable default print safety for tests
+        config.misc["print"] = {"default_test_print": 1}
+
     def setUp(self):
         super().setUp()
 
@@ -243,6 +247,8 @@ class ActionPrintCase(PrinterCase):
         """Return a new print strategy instance from kwargs overridden by args.
            If `model` is True, then use :attr:`strategy_model` instead.
         """
+        if safety is None:
+            safety = self.safety
         if model is True:
             model = self.strategy_model
         kwargs.update({
